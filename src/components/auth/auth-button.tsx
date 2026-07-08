@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import type { User } from "@/types/database";
 
-import { apiFetch, apiPath } from "@/lib/api-client";
+import { apiFetch, appPath } from "@/lib/api-client";
 import { isMockMode, isStaticDemo } from "@/lib/config";
 
 interface AuthButtonProps {
@@ -22,7 +22,7 @@ export function AuthButton({ profile }: AuthButtonProps) {
       const supabase = createClient();
       await supabase.auth.signOut();
     }
-    router.push(apiPath("/login"));
+    router.push(appPath("/login"));
     router.refresh();
   }
 

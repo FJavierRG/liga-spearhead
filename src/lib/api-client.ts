@@ -6,6 +6,15 @@ export function apiPath(path: string): string {
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
+/** Ruta para Link/router (Next.js añade basePath automáticamente). */
+export function appPath(path: string): string {
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  if (!isStaticDemo() || normalized === "/") {
+    return normalized;
+  }
+  return normalized.endsWith("/") ? normalized : `${normalized}/`;
+}
+
 export async function apiFetch(
   path: string,
   init?: RequestInit

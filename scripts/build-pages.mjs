@@ -67,6 +67,11 @@ process.on("SIGINT", () => {
 
 console.log("Preparando build estático para GitHub Pages…");
 
+const nextDir = path.join(root, ".next");
+if (fs.existsSync(nextDir)) {
+  fs.rmSync(nextDir, { recursive: true, force: true });
+}
+
 if (fs.existsSync(middlewarePath)) {
   fs.renameSync(middlewarePath, middlewareBackup);
 }

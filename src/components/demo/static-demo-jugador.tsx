@@ -7,7 +7,7 @@ import { getStaticDemoJugadorData } from "@/lib/client-demo/handlers";
 import { MatchList } from "@/components/match-list";
 import { Badge } from "@/components/ui/badge";
 import { SectionTitle } from "@/components/ui/section-title";
-import { apiPath } from "@/lib/api-client";
+import { appPath } from "@/lib/api-client";
 
 export function StaticDemoJugador({ playerId }: { playerId: string }) {
   const [data, setData] = useState<ReturnType<
@@ -33,7 +33,7 @@ export function StaticDemoJugador({ playerId }: { playerId: string }) {
 
   return (
     <div className="mx-auto max-w-2xl space-y-8 pb-12">
-      <Link href={apiPath("/")} className="link-fantasy text-sm">
+      <Link href={appPath("/")} className="link-fantasy text-sm">
         ← Liga
       </Link>
 

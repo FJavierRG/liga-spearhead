@@ -12,14 +12,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getClientSessionUserId } from "@/lib/client-demo/session";
-import { apiPath } from "@/lib/api-client";
+import { appPath } from "@/lib/api-client";
 
 export function StaticDemoLogin() {
   const router = useRouter();
 
   useEffect(() => {
     if (getClientSessionUserId()) {
-      router.replace(apiPath("/"));
+      router.replace(appPath("/"));
     }
   }, [router]);
 

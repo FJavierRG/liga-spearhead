@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { getClientSessionUserId } from "@/lib/client-demo/session";
 import { getMockUserById } from "@/lib/mock/store";
-import { apiPath } from "@/lib/api-client";
+import { appPath } from "@/lib/api-client";
 import type { User } from "@/types/database";
 
 export function StaticDemoShell({ children }: { children: React.ReactNode }) {
@@ -17,7 +17,7 @@ export function StaticDemoShell({ children }: { children: React.ReactNode }) {
     function syncProfile() {
       const userId = getClientSessionUserId();
       if (!userId) {
-        router.replace(apiPath("/login"));
+        router.replace(appPath("/login"));
         return;
       }
       setProfile(getMockUserById(userId) ?? null);
