@@ -1,13 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { apiFetch, appPath, notifyDemoDataChanged } from "@/lib/api-client";
+import { apiFetch, apiPath, notifyDemoDataChanged } from "@/lib/api-client";
 import { MOCK_USER_IDS } from "@/lib/mock/seed";
 
 export function MockLoginButton() {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   function enterDemo() {
@@ -18,8 +16,7 @@ export function MockLoginButton() {
         body: JSON.stringify({ userId: MOCK_USER_IDS.ana }),
       });
       notifyDemoDataChanged();
-      router.push(appPath("/"));
-      router.refresh();
+      window.location.assign(apiPath("/"));
     });
   }
 

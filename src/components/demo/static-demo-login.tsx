@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { MockLoginButton } from "@/components/auth/mock-login-button";
 import { CrestIcon } from "@/components/icons/crest-icon";
 import {
@@ -12,16 +11,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getClientSessionUserId } from "@/lib/client-demo/session";
-import { appPath } from "@/lib/api-client";
+import { apiPath } from "@/lib/api-client";
 
 export function StaticDemoLogin() {
-  const router = useRouter();
-
   useEffect(() => {
     if (getClientSessionUserId()) {
-      router.replace(appPath("/"));
+      window.location.replace(apiPath("/"));
     }
-  }, [router]);
+  }, []);
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">

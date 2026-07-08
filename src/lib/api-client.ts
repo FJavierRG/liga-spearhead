@@ -3,7 +3,11 @@ import { handleStaticDemoApi } from "@/lib/client-demo/handlers";
 
 export function apiPath(path: string): string {
   const base = getBasePath().replace(/\/$/, "");
-  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+  let normalized = path.startsWith("/") ? path : `/${path}`;
+  if (isStaticDemo() && normalized !== "/" && !normalized.endsWith("/")) {
+    normalized = `${normalized}/`;
+  }
+  return `${base}${normalized}`;
 }
 
 /** Ruta para Link/router (Next.js añade basePath automáticamente). */

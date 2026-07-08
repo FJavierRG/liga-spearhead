@@ -96,6 +96,18 @@ const result = spawnSync(process.execPath, [nextBin, "build"], {
 const outDir = path.join(root, "out");
 if (result.status === 0 && fs.existsSync(outDir)) {
   fs.writeFileSync(path.join(outDir, ".nojekyll"), "");
+
+  const base = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").replace(/\/$/, "");
+  if (base) {
+    const loginUrl = `${base}/login/`;
+    const redirectHtml = `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${loginUrl}"><script>location.replace("${loginUrl}")</script></head><body><p><a href="${loginUrl}">Ir al login</a></p></body></html>`;
+
+    const doubleBaseDir = path.join(outDir, base.slice(1));
+    fs.mkdirSync(doubleBaseDir, { recursive: true });
+    fs.writeFileSync(path.join(doubleBaseDir, "login.html"), redirectHtml);
+    fs.mkdirSync(path.join(doubleBaseDir, "login"), { recursive: true });
+    fs.writeFileSync(path.join(doubleBaseDir, "login", "index.html"), redirectHtml);
+  }
 }
 
 restoreAll();
