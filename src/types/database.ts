@@ -73,6 +73,8 @@ export interface StandingRow {
   derrotas: number;
   puntos: number;
   posicion?: number;
+  /** Posición previa a la última actualización de la clasificación. */
+  posicion_anterior?: number;
 }
 
 export interface HandicapResult {

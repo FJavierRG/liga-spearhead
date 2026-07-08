@@ -1,20 +1,29 @@
+"use client";
+
+import { useMemo } from "react";
 import Link from "next/link";
+import { PositionChangeIndicator } from "@/components/position-change-indicator";
+import { enrichStandingsWithPositionChanges } from "@/lib/league/position-snapshot";
 import type { StandingRow } from "@/types/database";
-import { addPositions } from "@/lib/league/standings";
 import { cn } from "@/lib/utils";
 
 interface StandingsTableProps {
   standings: StandingRow[];
+  seasonId: string;
   highlightId?: string;
   compact?: boolean;
 }
 
 export function StandingsTable({
   standings,
+  seasonId,
   highlightId,
   compact,
 }: StandingsTableProps) {
-  const rows = addPositions(standings);
+  const rows = useMemo(
+    () => enrichStandingsWithPositionChanges(standings, seasonId),
+    [standings, seasonId]
+  );
 
   return (
     <table className="w-full whitespace-nowrap text-sm">
@@ -63,12 +72,18 @@ export function StandingsTable({
                 {row.posicion}
               </td>
               <td className={cn("px-3", compact ? "py-2" : "py-2.5")}>
-                <Link
-                  href={`/jugador/${row.jugador_id}`}
-                  className="link-fantasy font-medium"
-                >
-                  {row.nombre}
-                </Link>
+                <div className="flex items-center gap-1.5">
+                  <Link
+                    href={`/jugador/${row.jugador_id}`}
+                    className="link-fantasy font-medium"
+                  >
+                    {row.nombre}
+                  </Link>
+                  <PositionChangeIndicator
+                    posicion={row.posicion}
+                    posicionAnterior={row.posicion_anterior}
+                  />
+                </div>
               </td>
               <td
                 className={cn(

@@ -1,45 +1,83 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MatchResultPicker } from "@/components/match-result-picker";
-import { getWinnerLabel, isPlayerInMatch } from "@/lib/league/match-result";
-import { formatDate } from "@/lib/utils";
+import { getPlayerMatchOutcome, isPlayerInMatch } from "@/lib/league/match-result";
+import {
+  buildMatchPointsIndex,
+  pointsDeltaColorClass,
+  type MatchPointsInfo,
+} from "@/lib/league/match-points";
+import { formatDate, cn } from "@/lib/utils";
+import { captureStandingsSnapshot } from "@/lib/league/position-snapshot";
 import type { MatchWithPlayers } from "@/lib/data/queries";
 import { apiFetch, notifyDemoDataChanged } from "@/lib/api-client";
-import type { MatchResult } from "@/types/database";
+import type { MatchResult, StandingRow, User } from "@/types/database";
 
-function getResultBadge(
-  match: MatchWithPlayers
-): { label: string; variant: "success" | "warning" | "danger" | "default" } {
-  if (match.resultado === "empate") {
-    return { label: "Empate", variant: "warning" };
-  }
+export type MatchListVariant = "personal" | "general";
 
-  const winner = getWinnerLabel(
+function getPersonalResultBadge(
+  match: MatchWithPlayers,
+  profilePlayerId: string
+): { label: string; variant: "success" | "danger" | "default" } {
+  const outcome = getPlayerMatchOutcome(
     match.resultado,
-    match.jugador_a_data,
-    match.jugador_b_data
+    profilePlayerId,
+    match.jugador_a,
+    match.jugador_b
   );
+  if (outcome === "draw") return { label: "Empate", variant: "default" };
+  if (outcome === "win") return { label: "Victoria", variant: "success" };
+  return { label: "Derrota", variant: "danger" };
+}
 
-  return { label: `Victoria ${winner}`, variant: "default" };
+function getProfilePlayerAndOpponent(
+  match: MatchWithPlayers,
+  profilePlayerId: string
+): { profilePlayer: User; opponent: User } | null {
+  if (!isPlayerInMatch(profilePlayerId, match.jugador_a, match.jugador_b)) {
+    return null;
+  }
+  if (profilePlayerId === match.jugador_a) {
+    return {
+      profilePlayer: match.jugador_a_data,
+      opponent: match.jugador_b_data,
+    };
+  }
+  return {
+    profilePlayer: match.jugador_b_data,
+    opponent: match.jugador_a_data,
+  };
 }
 
 interface MatchListProps {
   matches: MatchWithPlayers[];
-  viewerId?: string;
+  variant?: MatchListVariant;
+  /** Requerido en variant="personal". */
+  profilePlayerId?: string;
   editableForPlayerId?: string;
+  seasonId?: string;
+  standings?: StandingRow[];
 }
 
 export function MatchList({
   matches,
-  viewerId,
+  variant = "personal",
+  profilePlayerId,
   editableForPlayerId,
+  seasonId,
+  standings,
 }: MatchListProps) {
+  const matchPointsIndex = useMemo(
+    () => (variant === "general" ? buildMatchPointsIndex(matches) : null),
+    [matches, variant]
+  );
+
   if (matches.length === 0) {
     return (
       <div className="fantasy-panel border-dashed p-6 text-center text-[var(--muted)]">
@@ -54,8 +92,12 @@ export function MatchList({
         <MatchListItem
           key={match.id}
           match={match}
-          viewerId={viewerId}
+          variant={variant}
+          profilePlayerId={profilePlayerId}
           editableForPlayerId={editableForPlayerId}
+          seasonId={seasonId}
+          standings={standings}
+          pointsInfo={matchPointsIndex?.get(match.id)}
         />
       ))}
     </div>
@@ -64,24 +106,31 @@ export function MatchList({
 
 function MatchListItem({
   match,
-  viewerId,
+  variant,
+  profilePlayerId,
   editableForPlayerId,
+  seasonId,
+  standings,
+  pointsInfo,
 }: {
   match: MatchWithPlayers;
-  viewerId?: string;
+  variant: MatchListVariant;
+  profilePlayerId?: string;
   editableForPlayerId?: string;
+  seasonId?: string;
+  standings?: StandingRow[];
+  pointsInfo?: MatchPointsInfo;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [editing, setEditing] = useState(false);
   const [draftResult, setDraftResult] = useState<MatchResult>(match.resultado);
 
-  const opponent =
-    viewerId === match.jugador_a
-      ? match.jugador_b_data
-      : viewerId === match.jugador_b
-        ? match.jugador_a_data
-        : null;
+  const isPersonal = variant === "personal" && profilePlayerId;
+  const isGeneral = variant === "general";
+  const players = isPersonal
+    ? getProfilePlayerAndOpponent(match, profilePlayerId)
+    : null;
 
   const canEdit =
     editableForPlayerId &&
@@ -91,10 +140,15 @@ function MatchListItem({
       match.jugador_b
     );
 
-  const badge = getResultBadge(match);
+  const badge = isPersonal
+    ? getPersonalResultBadge(match, profilePlayerId!)
+    : null;
 
   function saveEdit() {
     startTransition(async () => {
+      if (seasonId && standings) {
+        captureStandingsSnapshot(seasonId, standings);
+      }
       const res = await apiFetch(`/api/matches/${match.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -114,17 +168,18 @@ function MatchListItem({
 
   return (
     <div className="fantasy-panel px-4 py-2.5 text-sm">
-      <div className="flex items-center justify-between gap-3">
-        <div>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1">
           <div className="font-medium">
-            {viewerId && opponent ? (
+            {players ? (
               <>
-                vs{" "}
+                {players.profilePlayer.nombre}
+                {" vs "}
                 <Link
-                  href={`/jugador/${opponent.id}`}
+                  href={`/jugador/${players.opponent.id}`}
                   className="link-fantasy"
                 >
-                  {opponent.nombre}
+                  {players.opponent.nombre}
                 </Link>
               </>
             ) : (
@@ -146,8 +201,26 @@ function MatchListItem({
             )}
           </div>
           <div className="text-[var(--muted)]">{formatDate(match.fecha)}</div>
+          {isGeneral && pointsInfo && (
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pt-0.5 text-sm">
+              <span className="text-[var(--muted)]" aria-hidden>
+                →
+              </span>
+              <LeaguePointsSummary
+                player={match.jugador_a_data}
+                points={pointsInfo.jugador_a}
+              />
+              <span className="text-[var(--muted)]" aria-hidden>
+                |
+              </span>
+              <LeaguePointsSummary
+                player={match.jugador_b_data}
+                points={pointsInfo.jugador_b}
+              />
+            </div>
+          )}
         </div>
-        {!editing && (
+        {!editing && isPersonal && badge && (
           <div className="flex shrink-0 items-center gap-2">
             <Badge variant={badge.variant}>{badge.label}</Badge>
             {canEdit && (
@@ -196,9 +269,23 @@ function MatchListItem({
   );
 }
 
-export function getMatchSummary(
-  match: MatchWithPlayers,
-  playerId: string
-): MatchResult {
-  return match.resultado;
+function LeaguePointsSummary({
+  player,
+  points,
+}: {
+  player: User;
+  points: { delta: number; total: number };
+}) {
+  return (
+    <span className="inline-flex flex-wrap items-baseline gap-1">
+      <Link href={`/jugador/${player.id}`} className="link-fantasy font-medium">
+        {player.nombre}
+      </Link>
+      <span className="text-[var(--muted)]">(</span>
+      <span className={cn("font-medium", pointsDeltaColorClass(points.delta))}>
+        +{points.delta} puntos
+      </span>
+      <span className="text-[var(--muted)]">: {points.total} puntos)</span>
+    </span>
+  );
 }

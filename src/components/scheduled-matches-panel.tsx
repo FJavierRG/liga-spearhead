@@ -10,8 +10,9 @@ import { MatchForm } from "@/components/match-form";
 import { MatchResultPicker } from "@/components/match-result-picker";
 import { formatWeekRange } from "@/lib/league/week";
 import { formatDate } from "@/lib/utils";
+import { captureStandingsSnapshot } from "@/lib/league/position-snapshot";
 import type { ScheduledMatchWithPlayers } from "@/lib/data/queries";
-import type { MatchResult, User } from "@/types/database";
+import type { MatchResult, StandingRow, User } from "@/types/database";
 import { apiFetch, notifyDemoDataChanged } from "@/lib/api-client";
 
 import { ACTIVE_TIME_SLOTS } from "@/types/database";
@@ -19,6 +20,7 @@ import { ACTIVE_TIME_SLOTS } from "@/types/database";
 interface ScheduledMatchesPanelProps {
   profile: User;
   seasonId: string;
+  standings: StandingRow[];
   players: User[];
   scheduled: ScheduledMatchWithPlayers[];
   weekLabel: string;
@@ -31,6 +33,7 @@ function slotLabel(franja: string) {
 export function ScheduledMatchesPanel({
   profile,
   seasonId,
+  standings,
   players,
   scheduled,
   weekLabel,
@@ -64,6 +67,7 @@ export function ScheduledMatchesPanel({
 
   function confirmFinish(matchId: string) {
     startTransition(async () => {
+      captureStandingsSnapshot(seasonId, standings);
       const res = await apiFetch(`/api/scheduled/${matchId}/complete`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

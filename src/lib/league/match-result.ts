@@ -17,3 +17,16 @@ export function isPlayerInMatch(
 ): boolean {
   return playerId === jugadorA || playerId === jugadorB;
 }
+
+export function getPlayerMatchOutcome(
+  resultado: MatchResult,
+  playerId: string,
+  jugadorA: string,
+  jugadorB: string
+): "win" | "loss" | "draw" {
+  if (resultado === "empate") return "draw";
+  const won =
+    (resultado === "victoria_jugador_a" && playerId === jugadorA) ||
+    (resultado === "victoria_jugador_b" && playerId === jugadorB);
+  return won ? "win" : "loss";
+}

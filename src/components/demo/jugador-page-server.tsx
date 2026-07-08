@@ -76,7 +76,8 @@ export async function JugadorPageServer({ id }: { id: string }) {
         {playerMatches.length > 0 ? (
           <MatchList
             matches={playerMatches}
-            viewerId={player.id}
+            variant="personal"
+            profilePlayerId={player.id}
             editableForPlayerId={isOwn ? currentProfile?.id : undefined}
           />
         ) : (

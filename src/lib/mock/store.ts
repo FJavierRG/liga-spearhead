@@ -6,7 +6,8 @@ import type {
 } from "@/types/database";
 import { generateWeeklySchedule } from "@/lib/league/weekly-schedule";
 import { getWeekStartIso } from "@/lib/league/week";
-import { createSeedStore, type MockStore } from "./seed";
+import { captureStandingsSnapshot } from "@/lib/league/position-snapshot";
+import { computeStandings, createSeedStore, type MockStore } from "./seed";
 
 const globalForMock = globalThis as typeof globalThis & {
   __ligaMockStore?: MockStore;
@@ -63,6 +64,13 @@ export function insertMockMatch(
     return { error: "Ya existe una partida entre estos jugadores en esa fecha" };
   }
 
+  const currentStandings = computeStandings(
+    store.users,
+    store.matches,
+    match.season_id
+  );
+  captureStandingsSnapshot(match.season_id, currentStandings);
+
   const newMatch: Match = {
     ...match,
     id: `mock-match-${Date.now()}`,
@@ -84,6 +92,13 @@ export function updateMockMatch(
   if (match.jugador_a !== playerId && match.jugador_b !== playerId) {
     return { error: "No puedes editar esta partida" };
   }
+
+  const currentStandings = computeStandings(
+    store.users,
+    store.matches,
+    match.season_id
+  );
+  captureStandingsSnapshot(match.season_id, currentStandings);
 
   match.resultado = resultado;
   return match;

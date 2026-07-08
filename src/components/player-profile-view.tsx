@@ -84,7 +84,11 @@ export function PlayerProfileView({
             <CardTitle>Historial de partidas</CardTitle>
           </CardHeader>
           <CardContent>
-            <MatchList matches={matches.slice(0, 5)} viewerId={player.id} />
+            <MatchList
+              matches={matches.slice(0, 5)}
+              variant="personal"
+              profilePlayerId={player.id}
+            />
           </CardContent>
         </Card>
       </div>

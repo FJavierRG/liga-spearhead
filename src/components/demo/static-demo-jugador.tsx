@@ -72,7 +72,8 @@ export function StaticDemoJugador({ playerId }: { playerId: string }) {
         {playerMatches.length > 0 ? (
           <MatchList
             matches={playerMatches}
-            viewerId={player.id}
+            variant="personal"
+            profilePlayerId={player.id}
             editableForPlayerId={isOwn ? viewerId ?? undefined : undefined}
           />
         ) : (

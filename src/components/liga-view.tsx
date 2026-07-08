@@ -117,7 +117,12 @@ export function LigaView({
 
         {section === "historial" && (
           <div className="mx-auto max-w-2xl pb-12">
-            <HistorialPanel matches={matches} currentPlayerId={profile.id} />
+            <HistorialPanel
+              matches={matches}
+              currentPlayerId={profile.id}
+              seasonId={season.id}
+              standings={standings}
+            />
           </div>
         )}
 
@@ -154,7 +159,11 @@ function TablonContent({
         <div className="sticky top-[3.75rem] w-max min-w-[26rem] space-y-2">
           <SectionTitle>Clasificación</SectionTitle>
           <div className="fantasy-panel overflow-hidden">
-            <StandingsTable standings={standings} highlightId={profile.id} />
+            <StandingsTable
+              standings={standings}
+              seasonId={season.id}
+              highlightId={profile.id}
+            />
           </div>
         </div>
       </aside>
@@ -173,7 +182,12 @@ function TablonContent({
         <section className="lg:hidden">
           <SectionTitle className="mb-2">Clasificación</SectionTitle>
           <div className="fantasy-panel overflow-hidden">
-            <StandingsTable standings={standings} highlightId={profile.id} compact />
+            <StandingsTable
+              standings={standings}
+              seasonId={season.id}
+              highlightId={profile.id}
+              compact
+            />
           </div>
         </section>
 
@@ -185,6 +199,7 @@ function TablonContent({
         <ScheduledMatchesPanel
           profile={profile}
           seasonId={season.id}
+          standings={standings}
           players={players}
           scheduled={scheduled}
           weekLabel={weekLabel}
