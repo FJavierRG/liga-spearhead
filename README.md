@@ -1,36 +1,121 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Liga Spearhead
 
-## Getting Started
+Web para gestionar una liga local de **Age of Sigmar: Spearhead**.
 
-First, run the development server:
+Incluye clasificación dinámica, registro de partidas, disponibilidad semanal, hándicap de PV y emparejamientos recomendados.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Stack
+
+- **Frontend:** Next.js, React, Tailwind CSS, shadcn/ui, TanStack Table
+- **Backend:** Supabase (PostgreSQL, Auth, RLS)
+
+## Requisitos
+
+- Node.js 20+ (recomendado 22.13+)
+- Cuenta en [Supabase](https://supabase.com)
+
+### Nota sobre `npx` en Windows
+
+Si al ejecutar `npx` Windows te pide elegir un programa, suele deberse a un archivo vacío en `C:\Windows\System32\npx` que tapa el de Node.js. Soluciones:
+
+1. Usar la ruta completa: `"C:\Program Files\nodejs\npx.cmd"`
+2. Usar `npm run dev` / `npm install` en lugar de `npx` cuando sea posible
+3. Eliminar el archivo erróneo `C:\Windows\System32\npx` (requiere permisos de administrador)
+
+## Configuración
+
+### 1. Variables de entorno
+
+Copia el ejemplo y rellena tus credenciales de Supabase:
+
+```powershell
+Copy-Item .env.local.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 2. Base de datos
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+En el panel de Supabase → **SQL Editor**, ejecuta el contenido de:
 
-## Learn More
+```
+supabase/migrations/001_initial_schema.sql
+```
 
-To learn more about Next.js, take a look at the following resources:
+Esto crea tablas, políticas RLS, funciones de clasificación/hándicap y una temporada activa de ejemplo.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 3. Autenticación OAuth
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+En Supabase → **Authentication → Providers**, activa:
 
-## Deploy on Vercel
+- **Google**
+- **Discord**
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+En **Authentication → URL Configuration**, añade la URL de callback:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+http://localhost:3000/auth/callback
+```
+
+(Añade también tu dominio de producción cuando despliegues.)
+
+### 4. Primer administrador
+
+Tras el primer inicio de sesión, promueve tu usuario en SQL:
+
+```sql
+UPDATE users SET rol = 'administrador'
+WHERE auth_user_id = 'uuid-de-auth-users';
+```
+
+## Desarrollo
+
+### Modo demo (sin Supabase)
+
+Para probar la web en local **sin crear ningún servicio**, con datos de ejemplo y login directo:
+
+```powershell
+npm run dev:demo
+```
+
+Abre [http://localhost:3000](http://localhost:3000) y elige un usuario:
+
+- **Carlos (Admin)** — administrador
+- **Ana, Borja, Diana, Erik** — jugadores con partidas y disponibilidad de ejemplo
+
+Los datos viven en memoria: si reinicias el servidor, vuelven al estado inicial. Ideal para enseñar la web a un compañero antes de decidir si desplegar.
+
+### Modo producción (con Supabase)
+
+```powershell
+npm install
+npm run dev
+```
+
+Abre [http://localhost:3000](http://localhost:3000).
+
+## Secciones
+
+| Ruta | Descripción |
+|------|-------------|
+| `/` | Inicio: rival recomendado, hándicap, posición, últimos resultados |
+| `/clasificacion` | Tabla de clasificación |
+| `/partidas` | Registrar partidas e historial |
+| `/disponibilidad` | Cuadrícula semanal (mañana/tarde/noche) |
+| `/perfil` | Tu perfil, estadísticas e historial |
+| `/perfil/[id]` | Perfil de otro jugador |
+
+## Reglas de negocio
+
+- **Puntos:** victoria 2, empate 1, derrota 0
+- **Hándicap:** +1 PV por cada 4 puntos de diferencia (para el jugador con menos puntos)
+- **Emparejamientos:** priorizan rivales nuevos, menos partidas jugadas, disponibilidad compatible y evitan repeticiones recientes
+
+Los pesos del algoritmo están en `src/lib/league/matching.ts` (`MATCH_WEIGHTS`).
+
+## Despliegue
+
+Compatible con [Vercel](https://vercel.com). Configura las mismas variables de entorno y actualiza las URLs de callback en Supabase.
