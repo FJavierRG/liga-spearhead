@@ -227,8 +227,7 @@ export function AvailabilityPanel({
       </div>
 
       <p className="text-base leading-relaxed text-[var(--muted)]">
-        Los emparejamientos se recalculan automáticamente al guardar tu
-        disponibilidad.
+        Los emparejamientos se calculan automáticamente los lunes a las 01:00.
       </p>
     </section>
   );

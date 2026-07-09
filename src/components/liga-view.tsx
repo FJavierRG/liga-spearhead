@@ -165,16 +165,6 @@ function TablonContent({
       </aside>
 
       <div className="min-w-0 flex-1 space-y-8 lg:max-w-2xl">
-        <header className="border-b border-[var(--border)]/60 pb-4">
-          <p className="text-sm italic text-[var(--muted)]">{season.nombre}</p>
-          <Link
-            href={`/jugador/${profile.id}`}
-            className="font-display link-fantasy text-xl font-semibold tracking-wide"
-          >
-            {profile.nombre}
-          </Link>
-        </header>
-
         <section className="lg:hidden">
           <SectionTitle className="mb-2">Clasificación</SectionTitle>
           <div className="fantasy-panel overflow-hidden">

@@ -101,9 +101,9 @@ export function ReglasPanel() {
 
         <RuleBlock title="Emparejamientos">
           <p className="text-[var(--muted)]">
-            Los emparejamientos son automáticos, no manuales. Se recalculan al
-            actualizar la disponibilidad, al registrar un resultado o al cancelar
-            un partido.
+            Los emparejamientos son automáticos, no manuales. Se calculan los
+            lunes a las 01:00. Si un partido se cancela, se intenta reasignar a
+            los jugadores afectados con la disponibilidad restante de la semana.
           </p>
           <p className="text-[var(--muted)]">Prioridades del algoritmo:</p>
           <ol className="list-inside list-decimal space-y-1 text-[var(--muted)]">
