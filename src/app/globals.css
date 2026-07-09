@@ -2,9 +2,9 @@
 
 :root {
   --background: #14100c;
-  --background-glow: #221a12;
-  --surface: #1e1812;
-  --surface-muted: #2a2218;
+  --background-glow: #2e2418;
+  --surface: #2c2419;
+  --surface-muted: #382e20;
   --border: #5c4a32;
   --border-light: #8b7348;
   --foreground: #ebe0cc;
@@ -29,7 +29,7 @@ html {
 }
 
 body {
-  background-color: var(--background);
+  background-color: #211a12;
   background-image:
     radial-gradient(ellipse 120% 80% at 50% -20%, var(--background-glow) 0%, transparent 55%),
     url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
