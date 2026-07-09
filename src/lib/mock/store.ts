@@ -1,6 +1,8 @@
 import type {
   Availability,
+  LeagueNotification,
   Match,
+  NotificationType,
   ScheduledMatch,
   User,
 } from "@/types/database";
@@ -180,6 +182,51 @@ export function getMockAllAvailability(): Availability[] {
   return getStoreInternal().availability.filter((a) => a.disponible);
 }
 
+// ─── Notifications ───────────────────────────────────────────────────────────
+
+function buildNotifMessage(
+  tipo: NotificationType,
+  names: string[]
+): string {
+  const joined = names.join(" y ");
+  switch (tipo) {
+    case "partido_cancelado":
+      return `Partido ${names.join(" vs ")} cancelado.`;
+    case "reasignacion_exitosa":
+      return `${joined} ${names.length > 1 ? "han sido reasignados" : "ha sido reasignado"} para esta semana.`;
+    case "sin_rival_disponible":
+      return `${joined} ${names.length > 1 ? "se quedan" : "se queda"} sin partido esta semana por falta de disponibilidad.`;
+  }
+}
+
+function addNotification(
+  store: ReturnType<typeof getStoreInternal>,
+  tipo: NotificationType,
+  jugadores: string[],
+  semana: string
+): void {
+  const names = jugadores.map(
+    (id) => store.users.find((u) => u.id === id)?.nombre ?? id
+  );
+  store.notifications.push({
+    id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    tipo,
+    jugadores,
+    semana,
+    mensaje: buildNotifMessage(tipo, names),
+    created_at: new Date().toISOString(),
+  });
+}
+
+export function getMockRecentNotifications(limit = 20): LeagueNotification[] {
+  const store = getStoreInternal();
+  return [...store.notifications]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, limit);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 function activePairKey(s: {
   season_id: string;
   week_start: string;
@@ -228,11 +275,32 @@ export function cancelMockScheduledMatch(
   if (!match) return false;
   if (match.jugador_a !== playerId && match.jugador_b !== playerId) return false;
 
-  const weekStart = match.week_start;
+  const { jugador_a, jugador_b, week_start } = match;
+  const freedPlayers = [jugador_a, jugador_b];
+
+  addNotification(store, "partido_cancelado", freedPlayers, week_start);
+
   match.status = "cancelado";
 
-  // Re-emparejar la semana para intentar cubrir el hueco.
-  ensureMockWeeklySchedule(weekStart);
+  // Intentar re-emparejar a los jugadores liberados (y cualquier otro sin partido).
+  ensureMockWeeklySchedule(week_start);
+
+  // Determinar cuáles consiguieron nuevo partido.
+  const nowScheduled = store.scheduled_matches.filter(
+    (s) => s.week_start === week_start && s.status === "programado"
+  );
+  const rematched = freedPlayers.filter((pid) =>
+    nowScheduled.some((s) => s.jugador_a === pid || s.jugador_b === pid)
+  );
+  const unmatched = freedPlayers.filter((pid) => !rematched.includes(pid));
+
+  if (rematched.length > 0) {
+    addNotification(store, "reasignacion_exitosa", rematched, week_start);
+  }
+  if (unmatched.length > 0) {
+    addNotification(store, "sin_rival_disponible", unmatched, week_start);
+  }
+
   return true;
 }
 

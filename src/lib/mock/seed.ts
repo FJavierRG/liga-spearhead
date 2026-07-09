@@ -1,5 +1,6 @@
 import type {
   Availability,
+  LeagueNotification,
   Match,
   ScheduledMatch,
   Season,
@@ -201,6 +202,7 @@ export interface MockStore {
   matches: Match[];
   availability: Availability[];
   scheduled_matches: ScheduledMatch[];
+  notifications: LeagueNotification[];
 }
 
 function buildInitialSchedule(): ScheduledMatch[] {
@@ -214,6 +216,27 @@ function buildInitialSchedule(): ScheduledMatch[] {
   );
 }
 
+const weekStart = getWeekStartIso();
+
+const SEED_NOTIFICATIONS: LeagueNotification[] = [
+  {
+    id: "notif-seed-1",
+    tipo: "partido_cancelado",
+    jugadores: [MOCK_USER_IDS.borja, MOCK_USER_IDS.diana],
+    semana: weekStart,
+    mensaje: "Partido Borja vs Diana cancelado.",
+    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "notif-seed-2",
+    tipo: "reasignacion_exitosa",
+    jugadores: [MOCK_USER_IDS.borja, MOCK_USER_IDS.diana],
+    semana: weekStart,
+    mensaje: "Borja y Diana han sido reasignados para esta semana.",
+    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000 + 500).toISOString(),
+  },
+];
+
 export function createSeedStore(): MockStore {
   return {
     users: structuredClone(MOCK_USERS),
@@ -221,6 +244,7 @@ export function createSeedStore(): MockStore {
     matches: structuredClone(MOCK_MATCHES),
     availability: structuredClone(MOCK_AVAILABILITY),
     scheduled_matches: buildInitialSchedule(),
+    notifications: structuredClone(SEED_NOTIFICATIONS),
   };
 }
 

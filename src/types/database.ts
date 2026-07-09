@@ -82,6 +82,21 @@ export interface HandicapResult {
   beneficiario: string;
 }
 
+export type NotificationType =
+  | "partido_cancelado"
+  | "reasignacion_exitosa"
+  | "sin_rival_disponible";
+
+export interface LeagueNotification {
+  id: string;
+  tipo: NotificationType;
+  /** IDs de los jugadores afectados. */
+  jugadores: string[];
+  semana: string;
+  mensaje: string;
+  created_at: string;
+}
+
 export interface RecommendedMatch {
   opponent: User;
   score: number;

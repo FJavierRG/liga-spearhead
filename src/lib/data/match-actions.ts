@@ -125,8 +125,59 @@ export async function cancelScheduledMatchAction(
 
   if (error) return { error: error.message };
 
-  // Re-emparejar la semana para intentar cubrir el hueco con jugadores libres.
+  const freedPlayers = [row.jugador_a, row.jugador_b];
+
+  // Obtener nombres para los mensajes.
+  const { data: usersData } = await supabase
+    .from("users")
+    .select("id, nombre")
+    .in("id", freedPlayers);
+  const nameOf = (id: string) =>
+    usersData?.find((u) => u.id === id)?.nombre ?? id;
+
+  // Registrar la cancelación.
+  await supabase.from("league_notifications").insert({
+    tipo: "partido_cancelado",
+    jugadores: freedPlayers,
+    semana: row.week_start,
+    mensaje: `Partido ${nameOf(row.jugador_a)} vs ${nameOf(row.jugador_b)} cancelado.`,
+  });
+
+  // Re-emparejar la semana para intentar cubrir el hueco.
   await ensureWeeklySchedule(row.week_start);
+
+  // Comprobar si los jugadores liberados tienen nuevo partido.
+  const { data: nowScheduled } = await supabase
+    .from("scheduled_matches")
+    .select("jugador_a, jugador_b")
+    .eq("week_start", row.week_start)
+    .eq("status", "programado");
+
+  const rematched = freedPlayers.filter((pid) =>
+    (nowScheduled ?? []).some((s) => s.jugador_a === pid || s.jugador_b === pid)
+  );
+  const unmatched = freedPlayers.filter((pid) => !rematched.includes(pid));
+
+  if (rematched.length > 0) {
+    const names = rematched.map(nameOf);
+    const joined = names.join(" y ");
+    await supabase.from("league_notifications").insert({
+      tipo: "reasignacion_exitosa",
+      jugadores: rematched,
+      semana: row.week_start,
+      mensaje: `${joined} ${names.length > 1 ? "han sido reasignados" : "ha sido reasignado"} para esta semana.`,
+    });
+  }
+  if (unmatched.length > 0) {
+    const names = unmatched.map(nameOf);
+    const joined = names.join(" y ");
+    await supabase.from("league_notifications").insert({
+      tipo: "sin_rival_disponible",
+      jugadores: unmatched,
+      semana: row.week_start,
+      mensaje: `${joined} ${names.length > 1 ? "se quedan" : "se queda"} sin partido esta semana por falta de disponibilidad.`,
+    });
+  }
 
   return { ok: true };
 }

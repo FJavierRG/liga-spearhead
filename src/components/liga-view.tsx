@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { StandingsTable } from "@/components/standings-table";
+import { NotificationsPanel } from "@/components/notifications-panel";
 import { HistorialPanel } from "@/components/historial-panel";
 import { ReglasPanel } from "@/components/reglas-panel";
 import {
@@ -15,7 +16,7 @@ import { SectionTitle } from "@/components/ui/section-title";
 import { formatWeekRange } from "@/lib/league/week";
 import { cn } from "@/lib/utils";
 import type { MatchWithPlayers, ScheduledMatchWithPlayers } from "@/lib/data/queries";
-import type { Availability, Season, StandingRow, User } from "@/types/database";
+import type { Availability, LeagueNotification, Season, StandingRow, User } from "@/types/database";
 
 const AvailabilityPanel = dynamic(
   () =>
@@ -45,6 +46,7 @@ interface LigaViewProps {
   scheduled: ScheduledMatchWithPlayers[];
   players: User[];
   matches: MatchWithPlayers[];
+  notifications: LeagueNotification[];
 }
 
 export function LigaView({
@@ -55,6 +57,7 @@ export function LigaView({
   scheduled,
   players,
   matches,
+  notifications,
 }: LigaViewProps) {
   const weekLabel = formatWeekRange(0);
   const [section, setSection] = useState<LigaSection>("tablon");
@@ -99,6 +102,7 @@ export function LigaView({
             scheduled={scheduled}
             players={players}
             weekLabel={weekLabel}
+            notifications={notifications}
           />
         )}
 
@@ -131,6 +135,7 @@ function TablonContent({
   scheduled,
   players,
   weekLabel,
+  notifications,
 }: {
   profile: User;
   season: Season;
@@ -139,19 +144,23 @@ function TablonContent({
   scheduled: ScheduledMatchWithPlayers[];
   players: User[];
   weekLabel: string;
+  notifications: LeagueNotification[];
 }) {
   return (
     <div className="mx-auto flex w-full max-w-7xl gap-10 pb-12">
       <aside className="hidden shrink-0 text-[80%] lg:block">
-        <div className="sticky top-[3.75rem] w-max min-w-[26rem] space-y-2">
-          <SectionTitle>Clasificación</SectionTitle>
-          <div className="fantasy-panel overflow-hidden">
-            <StandingsTable
-              standings={standings}
-              seasonId={season.id}
-              highlightId={profile.id}
-            />
+        <div className="sticky top-[3.75rem] w-max min-w-[26rem] space-y-4">
+          <div className="space-y-2">
+            <SectionTitle>Clasificación</SectionTitle>
+            <div className="fantasy-panel overflow-hidden">
+              <StandingsTable
+                standings={standings}
+                seasonId={season.id}
+                highlightId={profile.id}
+              />
+            </div>
           </div>
+          <NotificationsPanel notifications={notifications} />
         </div>
       </aside>
 
@@ -176,6 +185,10 @@ function TablonContent({
               compact
             />
           </div>
+        </section>
+
+        <section className="lg:hidden">
+          <NotificationsPanel notifications={notifications} />
         </section>
 
         <AvailabilityPanel
