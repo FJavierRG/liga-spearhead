@@ -63,7 +63,7 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="max-w-lg space-y-4 rounded-xl border border-neutral-200 bg-white p-6"
+      className="fantasy-panel space-y-4 p-6"
     >
       <div className="space-y-2">
         <Label htmlFor="nombre">Nombre</Label>

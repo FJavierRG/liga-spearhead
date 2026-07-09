@@ -1,5 +1,6 @@
 import { isMockMode } from "@/lib/config";
 import { getCurrentProfile } from "@/lib/data/queries";
+import { ensureWeeklySchedule } from "@/lib/data/scheduled-queries";
 import {
   cancelMockScheduledMatch,
   completeMockScheduledMatch,
@@ -107,7 +108,7 @@ export async function cancelScheduledMatchAction(
   const supabase = await createClient();
   const { data: row, error: fetchError } = await supabase
     .from("scheduled_matches")
-    .select("id, jugador_a, jugador_b, status")
+    .select("id, jugador_a, jugador_b, status, week_start")
     .eq("id", scheduledId)
     .single();
 
@@ -123,6 +124,10 @@ export async function cancelScheduledMatchAction(
     .eq("id", scheduledId);
 
   if (error) return { error: error.message };
+
+  // Re-emparejar la semana para intentar cubrir el hueco con jugadores libres.
+  await ensureWeeklySchedule(row.week_start);
+
   return { ok: true };
 }
 
@@ -138,6 +143,14 @@ export async function completeScheduledMatchAction(
   }
 
   const supabase = await createClient();
+
+  // Obtener week_start antes de completar para poder re-emparejar después.
+  const { data: row } = await supabase
+    .from("scheduled_matches")
+    .select("week_start")
+    .eq("id", scheduledId)
+    .single();
+
   const { data, error } = await supabase.rpc("complete_scheduled_match", {
     p_scheduled_id: scheduledId,
     p_resultado: resultado,
@@ -150,6 +163,11 @@ export async function completeScheduledMatchAction(
           ? "Ya existe una partida entre estos jugadores en esa fecha"
           : error.message,
     };
+  }
+
+  // Re-emparejar la semana por si quedan jugadores sin partido.
+  if (row?.week_start) {
+    await ensureWeeklySchedule(row.week_start);
   }
 
   return data as Match;

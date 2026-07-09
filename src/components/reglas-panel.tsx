@@ -101,9 +101,9 @@ export function ReglasPanel() {
 
         <RuleBlock title="Emparejamientos">
           <p className="text-[var(--muted)]">
-            Los emparejamientos son automáticos, no manuales. Se recalculan los
-            domingos por la noche según la disponibilidad guardada y el estado de
-            la liga.
+            Los emparejamientos son automáticos, no manuales. Se recalculan al
+            actualizar la disponibilidad, al registrar un resultado o al cancelar
+            un partido.
           </p>
           <p className="text-[var(--muted)]">Prioridades del algoritmo:</p>
           <ol className="list-inside list-decimal space-y-1 text-[var(--muted)]">
@@ -117,8 +117,8 @@ export function ReglasPanel() {
         <RuleBlock title="Registro de resultados">
           <p className="text-[var(--muted)]">
             Tras cada partida se registran jugadores, resultado y fecha. Al
-            guardarse, se actualiza la clasificación, se recalculan hándicaps y
-            se regeneran las propuestas de emparejamiento.
+            guardarse, se actualiza la clasificación y se recalculan los
+            hándicaps.
           </p>
         </RuleBlock>
       </div>

@@ -132,6 +132,9 @@ export function completeMockScheduledMatch(
   if ("error" in created) return created;
 
   scheduled.status = "jugado";
+
+  // Re-emparejar la semana por si quedan jugadores sin partido.
+  ensureMockWeeklySchedule(scheduled.week_start);
   return created;
 }
 
@@ -177,15 +180,19 @@ export function getMockAllAvailability(): Availability[] {
   return getStoreInternal().availability.filter((a) => a.disponible);
 }
 
+function activePairKey(s: {
+  season_id: string;
+  week_start: string;
+  jugador_a: string;
+  jugador_b: string;
+  fecha: string;
+}): string {
+  const [a, b] = [s.jugador_a, s.jugador_b].sort();
+  return `${s.season_id}|${s.week_start}|${a}|${b}|${s.fecha}`;
+}
+
 export function ensureMockWeeklySchedule(weekStart: string): ScheduledMatch[] {
   const store = getStoreInternal();
-  const existing = store.scheduled_matches.filter(
-    (s) => s.week_start === weekStart && s.status === "programado"
-  );
-
-  if (existing.length > 0) {
-    return store.scheduled_matches.filter((s) => s.week_start === weekStart);
-  }
 
   const generated = generateWeeklySchedule(
     store.seasons.find((s) => s.activa)!.id,
@@ -193,11 +200,17 @@ export function ensureMockWeeklySchedule(weekStart: string): ScheduledMatch[] {
     store.users,
     store.availability.filter((a) => a.disponible),
     store.matches,
-    store.scheduled_matches
+    store.scheduled_matches.filter((s) => s.week_start === weekStart)
   );
 
-  const existingIds = new Set(store.scheduled_matches.map((s) => s.id));
-  const newOnes = generated.filter((g) => !existingIds.has(g.id));
+  // Deduplicar por par normalizado + fecha, solo contra los activos.
+  const activePairs = new Set(
+    store.scheduled_matches
+      .filter((s) => s.week_start === weekStart && s.status === "programado")
+      .map((s) => activePairKey(s))
+  );
+
+  const newOnes = generated.filter((g) => !activePairs.has(activePairKey(g)));
 
   if (newOnes.length > 0) {
     store.scheduled_matches.push(...newOnes);
@@ -215,7 +228,11 @@ export function cancelMockScheduledMatch(
   if (!match) return false;
   if (match.jugador_a !== playerId && match.jugador_b !== playerId) return false;
 
+  const weekStart = match.week_start;
   match.status = "cancelado";
+
+  // Re-emparejar la semana para intentar cubrir el hueco.
+  ensureMockWeeklySchedule(weekStart);
   return true;
 }
 

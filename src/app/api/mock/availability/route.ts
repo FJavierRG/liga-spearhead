@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import { isMockMode } from "@/lib/config";
 import { getMockSessionUserId } from "@/lib/mock/auth";
-import {
-  cancelMockScheduledMatch,
-  saveMockAvailabilityBatch,
-} from "@/lib/mock/store";
+import { saveMockAvailabilityBatch } from "@/lib/mock/store";
 import { getWeekDates } from "@/lib/league/week";
 import type { TimeSlot } from "@/types/database";
 

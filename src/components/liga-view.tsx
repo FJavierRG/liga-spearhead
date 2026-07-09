@@ -72,9 +72,6 @@ export function LigaView({
     if (next === "reglas") {
       void marcarReglasVistas();
     }
-    if (window.matchMedia("(max-width: 1023px)").matches) {
-      setSidebarOpen(false);
-    }
   }
 
   return (
@@ -93,16 +90,6 @@ export function LigaView({
           sidebarOpen ? "lg:ml-56" : "lg:ml-14"
         )}
       >
-        <div className="mb-4 lg:hidden">
-          <span className="font-display text-sm tracking-wide text-[var(--muted)]">
-            {section === "tablon"
-              ? "Tablón"
-              : section === "historial"
-                ? "Historial"
-                : "Reglas del formato"}
-          </span>
-        </div>
-
         {section === "tablon" && (
           <TablonContent
             profile={profile}

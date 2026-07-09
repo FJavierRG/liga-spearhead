@@ -12,7 +12,6 @@ import type { Availability } from "@/types/database";
 import { ACTIVE_TIME_SLOTS, DAY_LABELS } from "@/types/database";
 
 import { apiFetch, notifyDemoDataChanged } from "@/lib/api-client";
-import { isMockMode, isStaticDemo } from "@/lib/config";
 
 interface AvailabilityPanelProps {
   playerId: string;
@@ -96,16 +95,15 @@ export function AvailabilityPanel({
         }))
       );
 
-      if (isMockMode() || isStaticDemo()) {
-        const res = await apiFetch("/api/mock/availability", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ jugador_id: playerId, week_start: weekStart, slots }),
-        });
-        if (!res.ok) {
-          toast.error("No se pudo guardar");
-          return;
-        }
+      const res = await apiFetch("/api/availability", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jugador_id: playerId, week_start: weekStart, slots }),
+      });
+
+      if (!res.ok) {
+        toast.error("No se pudo guardar la disponibilidad");
+        return;
       }
 
       setEditing(false);
@@ -229,8 +227,8 @@ export function AvailabilityPanel({
       </div>
 
       <p className="text-base leading-relaxed text-[var(--muted)]">
-        Los emparejamientos se calculan los domingos por la noche según la
-        disponibilidad guardada.
+        Los emparejamientos se recalculan automáticamente al guardar tu
+        disponibilidad.
       </p>
     </section>
   );

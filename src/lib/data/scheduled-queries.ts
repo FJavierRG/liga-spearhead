@@ -9,6 +9,18 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { Availability, Match, ScheduledMatch, User } from "@/types/database";
 
+/** Clave normalizada de un emparejamiento activo: season|week|minId|maxId|fecha */
+function activePairKey(s: {
+  season_id: string;
+  week_start: string;
+  jugador_a: string;
+  jugador_b: string;
+  fecha: string;
+}): string {
+  const [a, b] = [s.jugador_a, s.jugador_b].sort();
+  return `${s.season_id}|${s.week_start}|${a}|${b}|${s.fecha}`;
+}
+
 export async function ensureWeeklySchedule(
   weekStart: string
 ): Promise<void> {
@@ -19,15 +31,6 @@ export async function ensureWeeklySchedule(
 
   const admin = createAdminClient();
   if (!admin) return;
-
-  const { data: existing } = await admin
-    .from("scheduled_matches")
-    .select("id")
-    .eq("week_start", weekStart)
-    .eq("status", "programado")
-    .limit(1);
-
-  if (existing && existing.length > 0) return;
 
   const supabase = await createClient();
   const { data: season } = await supabase
@@ -46,7 +49,8 @@ export async function ensureWeeklySchedule(
       supabase
         .from("scheduled_matches")
         .select("*")
-        .eq("season_id", season.id),
+        .eq("season_id", season.id)
+        .eq("week_start", weekStart),
     ]);
 
   if (!users?.length) return;
@@ -60,8 +64,17 @@ export async function ensureWeeklySchedule(
     (scheduled ?? []) as ScheduledMatch[]
   );
 
-  const existingIds = new Set((scheduled ?? []).map((s) => s.id));
-  const toInsert = generated.filter((g) => !existingIds.has(g.id));
+  // Deduplicar por par normalizado + fecha, solo contra los activos (programado).
+  // Así los cancelados liberan a sus jugadores para un nuevo emparejamiento.
+  const activePairs = new Set(
+    (scheduled ?? [])
+      .filter((s) => s.status === "programado")
+      .map((s) => activePairKey(s as ScheduledMatch))
+  );
+
+  const toInsert = generated.filter(
+    (g) => !activePairs.has(activePairKey(g))
+  );
 
   if (toInsert.length === 0) return;
 

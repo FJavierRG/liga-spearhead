@@ -4,65 +4,17 @@ import type {
   ScheduledMatch,
   TimeSlot,
   User,
-} from "@/types/database";
-import { ACTIVE_TIME_SLOTS } from "@/types/database";
-import { MATCH_WEIGHTS } from "./matching";
+} from "../../types/database";
+import { ACTIVE_TIME_SLOTS } from "../../types/database";
+import { MATCH_WEIGHTS, countMatches, havePlayed, getLastOpponent } from "./matching";
 import { getWeekDates } from "./week";
 
-function havePlayed(a: string, b: string, matches: Match[]): boolean {
-  return matches.some(
-    (m) =>
-      (m.jugador_a === a && m.jugador_b === b) ||
-      (m.jugador_a === b && m.jugador_b === a)
-  );
-}
-
-function countMatches(playerId: string, matches: Match[]): number {
-  return matches.filter(
-    (m) => m.jugador_a === playerId || m.jugador_b === playerId
-  ).length;
-}
-
-function countPreviousMatchups(a: string, b: string, matches: Match[]): number {
-  return matches.filter(
-    (m) =>
-      (m.jugador_a === a && m.jugador_b === b) ||
-      (m.jugador_a === b && m.jugador_b === a)
-  ).length;
-}
-
-function getLastOpponent(playerId: string, matches: Match[]): string | null {
-  const sorted = [...matches]
-    .filter((m) => m.jugador_a === playerId || m.jugador_b === playerId)
-    .sort(
-      (a, b) =>
-        new Date(b.fecha).getTime() - new Date(a.fecha).getTime() ||
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-  if (!sorted.length) return null;
-  const last = sorted[0];
-  return last.jugador_a === playerId ? last.jugador_b : last.jugador_a;
-}
-
-function scorePairing(
-  playerId: string,
-  opponentId: string,
-  matches: Match[],
-  maxMatches: number
-): number {
-  let score = 0;
-  if (!havePlayed(playerId, opponentId, matches)) {
-    score += MATCH_WEIGHTS.neverPlayed;
-  }
-  score +=
-    (maxMatches - countMatches(opponentId, matches)) *
-    MATCH_WEIGHTS.fewerMatches;
-  const lastOpponent = getLastOpponent(playerId, matches);
-  if (lastOpponent === opponentId) score += MATCH_WEIGHTS.consecutiveRepeat;
-  score +=
-    countPreviousMatchups(playerId, opponentId, matches) *
-    MATCH_WEIGHTS.previousRepeat;
-  return score;
+interface Edge {
+  playerA: User;
+  playerB: User;
+  fecha: string;
+  franja: TimeSlot;
+  weight: number;
 }
 
 function slotsForDay(
@@ -88,8 +40,98 @@ function pickFranja(
   availability: Availability[]
 ): TimeSlot | null {
   const aSlots = slotsForDay(a, fecha, availability);
-  const overlap = aSlots.filter((f) => slotsForDay(b, fecha, availability).includes(f));
+  const overlap = aSlots.filter((f) =>
+    slotsForDay(b, fecha, availability).includes(f)
+  );
   return overlap[0] ?? null;
+}
+
+function edgeWeight(
+  a: string,
+  b: string,
+  matches: Match[],
+  maxMatches: number
+): number {
+  const isRepeatLast =
+    getLastOpponent(a, matches) === b || getLastOpponent(b, matches) === a;
+  const neverMet = !havePlayed(a, b, matches);
+  const fewerMatchesBonus =
+    (maxMatches - countMatches(a, matches)) * MATCH_WEIGHTS.fewerMatches +
+    (maxMatches - countMatches(b, matches)) * MATCH_WEIGHTS.fewerMatches;
+  return (
+    MATCH_WEIGHTS.base +
+    fewerMatchesBonus +
+    (isRepeatLast ? MATCH_WEIGHTS.repeatLast : 0) +
+    (neverMet ? MATCH_WEIGHTS.neverPlayed : 0)
+  );
+}
+
+/**
+ * Emparejamiento máximo ponderado mediante DP con bitmask.
+ *
+ * Garantía: maximiza primero el número de jugadores emparejados.
+ * Entre soluciones con la misma cobertura, aplica desempatadores en orden:
+ *   1. Evitar repetir el último rival (−100).
+ *   2. Preferir parejas que nunca se han enfrentado (+10).
+ *
+ * Complejidad: O(2^n × n), n ≤ 15 → ~460 k operaciones, instant.
+ */
+function maximumWeightMatching(pool: User[], edges: Edge[]): Edge[] {
+  const n = pool.length;
+  if (n < 2) return [];
+
+  // Para cada par (i, j) guardamos la arista de mayor peso.
+  const best = new Map<string, Edge>();
+  for (const edge of edges) {
+    const i = pool.findIndex((p) => p.id === edge.playerA.id);
+    const j = pool.findIndex((p) => p.id === edge.playerB.id);
+    const key = `${Math.min(i, j)}-${Math.max(i, j)}`;
+    const prev = best.get(key);
+    if (!prev || edge.weight > prev.weight) best.set(key, edge);
+  }
+
+  const dp = new Array<{ score: number; pairs: Edge[] } | null>(1 << n).fill(
+    null
+  );
+
+  function solve(mask: number): { score: number; pairs: Edge[] } {
+    if (dp[mask] !== null) return dp[mask]!;
+
+    // Jugador de menor índice sin emparejar en este subproblema.
+    let low = -1;
+    for (let i = 0; i < n; i++) {
+      if (mask & (1 << i)) {
+        low = i;
+        break;
+      }
+    }
+
+    if (low === -1) {
+      dp[mask] = { score: 0, pairs: [] };
+      return dp[mask]!;
+    }
+
+    // Opción: el jugador `low` no juega esta semana.
+    let result = solve(mask & ~(1 << low));
+
+    // Opción: emparejar `low` con otro jugador disponible.
+    for (let j = low + 1; j < n; j++) {
+      if (!(mask & (1 << j))) continue;
+      const edge = best.get(`${low}-${j}`);
+      if (!edge) continue;
+
+      const sub = solve(mask & ~(1 << low) & ~(1 << j));
+      const score = edge.weight + sub.score;
+      if (score > result.score) {
+        result = { score, pairs: [edge, ...sub.pairs] };
+      }
+    }
+
+    dp[mask] = result;
+    return result;
+  }
+
+  return solve((1 << n) - 1).pairs;
 }
 
 export function generateWeeklySchedule(
@@ -105,94 +147,60 @@ export function generateWeeklySchedule(
     (s) => s.week_start === weekStart && s.status === "programado"
   );
 
-  const assignedPerDay = new Map<string, Set<string>>();
-  for (const date of weekDates) {
-    assignedPerDay.set(date, new Set());
-  }
-  for (const s of activeExisting) {
-    assignedPerDay.get(s.fecha)?.add(s.jugador_a);
-    assignedPerDay.get(s.fecha)?.add(s.jugador_b);
-  }
-
-  const results: ScheduledMatch[] = [...activeExisting];
-  const maxMatches = Math.max(
-    ...users.map((u) => countMatches(u.id, playedMatches)),
-    0
+  // Jugadores ya emparejados esta semana.
+  const alreadyMatched = new Set<string>(
+    activeExisting.flatMap((s) => [s.jugador_a, s.jugador_b])
   );
 
-  for (const fecha of weekDates) {
-    const assigned = assignedPerDay.get(fecha)!;
-    let pool = users.filter(
-      (u) =>
-        !assigned.has(u.id) &&
-        slotsForDay(u.id, fecha, availability).length > 0
-    );
+  // Pool: jugadores sin partido asignado con al menos una franja disponible esta semana.
+  const pool = users.filter(
+    (u) =>
+      !alreadyMatched.has(u.id) &&
+      weekDates.some((fecha) => slotsForDay(u.id, fecha, availability).length > 0)
+  );
 
-    while (pool.length >= 2) {
-      let bestPair: [User, User] | null = null;
-      let bestScore = -Infinity;
-      let iterations = 0;
-      const maxIterations = pool.length * pool.length;
+  if (pool.length < 2) return [...activeExisting];
 
-      for (let i = 0; i < pool.length; i++) {
-        for (let j = i + 1; j < pool.length; j++) {
-          if (++iterations > maxIterations) break;
-          const a = pool[i];
-          const b = pool[j];
-          const franja = pickFranja(a.id, b.id, fecha, availability);
-          if (!franja) continue;
+  const maxMatches = Math.max(
+    0,
+    ...users.map((u) => countMatches(u.id, playedMatches))
+  );
 
-          const score =
-            scorePairing(a.id, b.id, playedMatches, maxMatches) +
-            MATCH_WEIGHTS.availabilityOverlap;
-
-          if (score > bestScore) {
-            bestScore = score;
-            bestPair = [a, b];
-          }
+  // Aristas: para cada par, primer día de la semana con hueco compatible.
+  const edges: Edge[] = [];
+  for (let i = 0; i < pool.length; i++) {
+    for (let j = i + 1; j < pool.length; j++) {
+      const a = pool[i];
+      const b = pool[j];
+      for (const fecha of weekDates) {
+        const franja = pickFranja(a.id, b.id, fecha, availability);
+        if (franja) {
+          edges.push({
+            playerA: a,
+            playerB: b,
+            fecha,
+            franja,
+            weight: edgeWeight(a.id, b.id, playedMatches, maxMatches),
+          });
+          break;
         }
       }
-
-      if (!bestPair) break;
-
-      const [playerA, playerB] = bestPair;
-      const franja = pickFranja(playerA.id, playerB.id, fecha, availability)!;
-
-      const scheduled: ScheduledMatch = {
-        id: `sched-${weekStart}-${fecha}-${playerA.id}-${playerB.id}`,
-        season_id: seasonId,
-        jugador_a: playerA.id,
-        jugador_b: playerB.id,
-        fecha,
-        franja,
-        week_start: weekStart,
-        status: "programado",
-        created_at: new Date().toISOString(),
-      };
-
-      results.push(scheduled);
-      assigned.add(playerA.id);
-      assigned.add(playerB.id);
-      pool = pool.filter(
-        (u) => u.id !== playerA.id && u.id !== playerB.id
-      );
     }
   }
 
-  return results;
-}
+  const matched = maximumWeightMatching(pool, edges);
 
-export function getPlayerScheduledForWeek(
-  scheduled: ScheduledMatch[],
-  playerId: string,
-  weekStart: string
-): ScheduledMatch[] {
-  return scheduled
-    .filter(
-      (s) =>
-        s.week_start === weekStart &&
-        s.status === "programado" &&
-        (s.jugador_a === playerId || s.jugador_b === playerId)
-    )
-    .sort((a, b) => a.fecha.localeCompare(b.fecha));
+  const newMatches: ScheduledMatch[] = matched.map((edge) => ({
+    id: `sched-${weekStart}-${edge.fecha}-${edge.playerA.id}-${edge.playerB.id}`,
+    season_id: seasonId,
+    jugador_a: edge.playerA.id,
+    jugador_b: edge.playerB.id,
+    fecha: edge.fecha,
+    franja: edge.franja,
+    week_start: weekStart,
+    status: "programado",
+    created_at: new Date().toISOString(),
+  }));
+
+  return [...activeExisting, ...newMatches];
 }

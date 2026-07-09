@@ -1,7 +1,7 @@
 import { isMockMode } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { getScheduledMatchesForPlayer } from "@/lib/data/scheduled-queries";
-import { getWeekStartIso, getWeekDates } from "@/lib/league/week";
+import { getWeekDates, getScheduleTargetWeekStart } from "@/lib/league/week";
 import { getMockSessionUserId } from "@/lib/mock/auth";
 import {
   getMockStore,
@@ -194,16 +194,16 @@ export async function getPlayerAvailability(
   }
 
   const supabase = await createClient();
-  const weekDates = getWeekDates();
-  const weekStart = weekDates[0];
-  const weekEnd = weekDates[6];
+  // Cargamos ±4 semanas para que la navegación del panel funcione sin recargas.
+  const rangeStart = getWeekDates(new Date(), -4)[0];
+  const rangeEnd = getWeekDates(new Date(), 4)[6];
 
   const { data } = await supabase
     .from("availability")
     .select("*")
     .eq("jugador_id", playerId)
-    .gte("fecha", weekStart)
-    .lte("fecha", weekEnd);
+    .gte("fecha", rangeStart)
+    .lte("fecha", rangeEnd);
 
   return data ?? [];
 }
@@ -256,6 +256,8 @@ export async function getPlayerScheduledMatches(
   playerId: string,
   weekStart?: string
 ): Promise<ScheduledMatchWithPlayers[]> {
-  const start = weekStart ?? getWeekStartIso();
+  // getScheduleTargetWeekStart apunta a la semana siguiente los domingos por la noche,
+  // para que los jugadores ya vean sus partidos de la próxima semana al fin del domingo.
+  const start = weekStart ?? getScheduleTargetWeekStart();
   return getScheduledMatchesForPlayer(playerId, start);
 }
