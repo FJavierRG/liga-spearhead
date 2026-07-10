@@ -15,9 +15,45 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import type { Match, MatchResult } from "@/types/database";
 
+export const DAILY_MATCH_COMPLETION_LIMIT = 2;
+export const DAILY_MATCH_LIMIT_MESSAGE = `Has alcanzado el límite de ${DAILY_MATCH_COMPLETION_LIMIT} partidas registradas por día.`;
+
 export async function resolveActorId(): Promise<string | null> {
   const profile = await getCurrentProfile();
   return profile?.id ?? null;
+}
+
+async function assertCanRegisterMatchToday(): Promise<
+  { ok: true } | { error: string }
+> {
+  const profile = await getCurrentProfile();
+  if (!profile) return { error: "No autenticado" };
+  if (isMockMode() || profile.rol === "administrador") return { ok: true };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("can_current_user_create_match_today");
+
+  if (error) {
+    return { ok: true };
+  }
+
+  if (!data) {
+    return { error: DAILY_MATCH_LIMIT_MESSAGE };
+  }
+
+  return { ok: true };
+}
+
+function mapMatchCreationError(message: string): string {
+  if (message.includes("límite de 2 partidas")) {
+    return DAILY_MATCH_LIMIT_MESSAGE;
+  }
+
+  if (message.includes("unique")) {
+    return "Ya existe una partida entre estos jugadores en esa fecha";
+  }
+
+  return message;
 }
 
 export async function createMatchAction(input: {
@@ -29,6 +65,9 @@ export async function createMatchAction(input: {
 }): Promise<Match | { error: string }> {
   const actorId = await resolveActorId();
   if (!actorId) return { error: "No autenticado" };
+
+  const limit = await assertCanRegisterMatchToday();
+  if ("error" in limit) return limit;
 
   if (input.jugador_a !== actorId && input.jugador_b !== actorId) {
     return { error: "Debes participar en la partida" };
@@ -52,11 +91,7 @@ export async function createMatchAction(input: {
     .single();
 
   if (error) {
-    return {
-      error: error.message.includes("unique")
-        ? "Ya existe una partida entre estos jugadores en esa fecha"
-        : error.message,
-    };
+    return { error: mapMatchCreationError(error.message) };
   }
 
   return data;
@@ -191,6 +226,9 @@ export async function completeScheduledMatchAction(
   const actorId = await resolveActorId();
   if (!actorId) return { error: "No autenticado" };
 
+  const limit = await assertCanRegisterMatchToday();
+  if ("error" in limit) return limit;
+
   if (isMockMode()) {
     return completeMockScheduledMatch(scheduledId, actorId, resultado);
   }
@@ -209,12 +247,7 @@ export async function completeScheduledMatchAction(
   });
 
   if (error) {
-    return {
-      error:
-        error.message.includes("unique")
-          ? "Ya existe una partida entre estos jugadores en esa fecha"
-          : error.message,
-    };
+    return { error: mapMatchCreationError(error.message) };
   }
 
   if (scheduled) {

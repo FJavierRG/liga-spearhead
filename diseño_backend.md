@@ -40,6 +40,8 @@ La aplicación tendrá una única fuente de verdad: la base de datos.
 
 Las estadísticas y clasificaciones se calcularán a partir de los datos almacenados, evitando duplicar información derivada siempre que sea posible.
 
+**Estado actual:** la base de datos de producción **ya contiene usuarios reales** y actividad de la liga. Cualquier SQL o migración debe ser incremental y no destructiva. Ver [`docs/BASE_DE_DATOS.md`](docs/BASE_DE_DATOS.md).
+
 ---
 
 # Autenticación

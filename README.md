@@ -17,6 +17,7 @@ Incluye clasificación dinámica, registro de partidas, disponibilidad semanal, 
 | Documento | Contenido |
 |-----------|-----------|
 | [`docs/EMPAREJAMIENTOS.md`](docs/EMPAREJAMIENTOS.md) | Calendario, cómo salta el emparejamiento, variables necesarias |
+| [`docs/BASE_DE_DATOS.md`](docs/BASE_DE_DATOS.md) | **BD en producción con usuarios reales**, reglas para SQL |
 | [`diseño_backend.md`](diseño_backend.md) | Arquitectura y reglas de negocio |
 | [`diseño_frontend.md`](diseño_frontend.md) | Interfaz y UX |
 | [`idea_original.md`](idea_original.md) | Diseño conceptual de la liga |
@@ -47,10 +48,16 @@ Rellena al menos las credenciales de Supabase. En producción también necesitas
 
 ### 2. Base de datos
 
-En Supabase → **SQL Editor**, ejecuta las migraciones de `supabase/migrations/` **en orden por nombre de archivo**:
+> **⚠️ Producción activa:** la BD de Supabase **ya tiene usuarios reales** usando la liga. No reejecutes el esquema inicial ni scripts destructivos. Detalle: [`docs/BASE_DE_DATOS.md`](docs/BASE_DE_DATOS.md).
+
+**Instalación nueva** (proyecto Supabase vacío): ejecuta las migraciones de `supabase/migrations/` en orden. Ver [`supabase/migrations/README.md`](supabase/migrations/README.md).
+
+**Cambios posteriores:** solo migraciones nuevas incrementales (`004_*.sql`, …), nunca volver a lanzar `001_initial_schema.sql` en el proyecto de producción.
+
+Migraciones existentes (referencia):
 
 1. `001_initial_schema.sql`
-2. `002_player_name_constraints.sql` (o `002_reglas_pendientes.sql` si aplica en tu historial)
+2. `002_player_name_constraints.sql` / `002_reglas_pendientes.sql`
 3. `003_scheduled_matches.sql`
 4. `003_unique_player_nombre.sql`
 
