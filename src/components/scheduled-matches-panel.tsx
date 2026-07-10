@@ -9,6 +9,7 @@ import { SectionTitle } from "@/components/ui/section-title";
 import { MatchForm } from "@/components/match-form";
 import { MatchResultPicker } from "@/components/match-result-picker";
 import { formatWeekRange } from "@/lib/league/week";
+import { openMatchInGoogleCalendar } from "@/lib/league/calendar-export";
 import { formatDate } from "@/lib/utils";
 import { captureStandingsSnapshot } from "@/lib/league/position-snapshot";
 import type { ScheduledMatchWithPlayers } from "@/lib/data/queries";
@@ -129,6 +130,21 @@ export function ScheduledMatchesPanel({
                           onClick={() => openFinish(match)}
                         >
                           Finalizado
+                        </Button>
+                        <Button
+                          size="sm"
+                          disabled={isPending}
+                          onClick={() =>
+                            openMatchInGoogleCalendar({
+                              matchId: match.id,
+                              fecha: match.fecha,
+                              franja: match.franja,
+                              playerName: profile.nombre,
+                              opponentName: opponent.nombre,
+                            })
+                          }
+                        >
+                          Sincronizar
                         </Button>
                         <Button
                           size="sm"
