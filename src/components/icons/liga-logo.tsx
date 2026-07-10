@@ -3,7 +3,7 @@ import { assetPath } from "@/lib/config";
 
 const sizeClasses = {
   nav: "h-8 w-8",
-  login: "h-[5.5rem] w-[5.5rem]",
+  login: "h-[5.5rem] w-[5.5rem] scale-[1.3]",
 } as const;
 
 interface LigaLogoProps {

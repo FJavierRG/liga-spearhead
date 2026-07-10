@@ -3,8 +3,14 @@ import { Cinzel, Crimson_Pro } from "next/font/google";
 import { Toaster } from "sonner";
 import { StaticDemoBanner } from "@/components/demo/static-demo-banner";
 import { RataCornerDecoration } from "@/components/layout/rata-corner-decoration";
-import { isStaticDemo } from "@/lib/config";
+import { isStaticDemo, getBasePath } from "@/lib/config";
 import "./globals.css";
+
+function appAsset(path: string): string {
+  const base = getBasePath().replace(/\/$/, "");
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return `${base}${normalized}`;
+}
 
 const cinzel = Cinzel({
   subsets: ["latin"],
@@ -21,6 +27,11 @@ const crimson = Crimson_Pro({
 export const metadata: Metadata = {
   title: "Liga Spearhead",
   description: "Liga local de Age of Sigmar: Spearhead",
+  icons: {
+    icon: [{ url: appAsset("/icon.png"), type: "image/png", sizes: "512x512" }],
+    shortcut: appAsset("/favicon.ico"),
+    apple: appAsset("/icon.png"),
+  },
 };
 
 export default function RootLayout({

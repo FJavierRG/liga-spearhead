@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { User } from "@/types/database";
+import { isUniqueNombreViolation } from "@/lib/auth/login-identifier";
 import {
   PLAYER_NAME_MAX_LENGTH,
   sanitizePlayerName,
@@ -48,7 +49,8 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
         });
 
         if (!res.ok) {
-          toast.error("No se pudo actualizar el perfil");
+          const data = (await res.json()) as { error?: string };
+          toast.error(data.error ?? "No se pudo actualizar el perfil");
           return;
         }
 
@@ -64,7 +66,11 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
         .eq("id", profile.id);
 
       if (error) {
-        toast.error("No se pudo actualizar el perfil");
+        toast.error(
+          isUniqueNombreViolation(error)
+            ? "Ese nick ya está cogido."
+            : "No se pudo actualizar el perfil"
+        );
         return;
       }
 
@@ -80,7 +86,7 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
       className="fantasy-panel space-y-4 p-6"
     >
       <div className="space-y-2">
-        <Label htmlFor="nombre">Nombre</Label>
+        <Label htmlFor="nombre">Nick</Label>
         <Input
           id="nombre"
           value={nombre}

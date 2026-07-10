@@ -29,5 +29,9 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
   }
 
+  if ("error" in updated) {
+    return NextResponse.json({ error: updated.error }, { status: 409 });
+  }
+
   return NextResponse.json(updated);
 }

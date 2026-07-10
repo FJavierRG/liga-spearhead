@@ -37,12 +37,30 @@ export function getMockUserById(id: string): User | undefined {
 export function updateMockUser(
   id: string,
   data: Partial<Pick<User, "nombre" | "faccion" | "reglas_pendientes">>
-): User | null {
+): User | null | { error: string } {
   const store = getStoreInternal();
   const index = store.users.findIndex((u) => u.id === id);
   if (index === -1) return null;
+
+  if (
+    data.nombre &&
+    isMockNombreTaken(data.nombre, id)
+  ) {
+    return { error: "Ese nick ya está cogido." };
+  }
+
   store.users[index] = { ...store.users[index], ...data };
   return store.users[index];
+}
+
+export function isMockNombreTaken(
+  nombre: string,
+  excludeId?: string
+): boolean {
+  const normalized = nombre.toLowerCase();
+  return getStoreInternal().users.some(
+    (u) => u.nombre.toLowerCase() === normalized && u.id !== excludeId
+  );
 }
 
 export function insertMockMatch(

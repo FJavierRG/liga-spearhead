@@ -19,9 +19,12 @@ interface LoginFormProps {
   authError?: boolean;
 }
 
+const INVALID_CREDENTIALS = "Email, nick o contraseña incorrectos.";
+
 export function LoginForm({ authError }: LoginFormProps) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("signin");
+  const [identifier, setIdentifier] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nombre, setNombre] = useState("");
@@ -44,8 +47,6 @@ export function LoginForm({ authError }: LoginFormProps) {
     setInfo(null);
     setIsSubmitting(true);
 
-    const supabase = createClient();
-
     if (mode === "signup") {
       const nameCheck = validatePlayerName(nombre);
       if (!nameCheck.ok) {
@@ -54,6 +55,29 @@ export function LoginForm({ authError }: LoginFormProps) {
         return;
       }
 
+      const availRes = await fetch("/api/auth/nombre-disponible", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nombre: nameCheck.value }),
+      });
+      const availData = (await availRes.json()) as {
+        available?: boolean;
+        error?: string;
+      };
+
+      if (!availRes.ok) {
+        setError(availData.error ?? "No se pudo comprobar el nick.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!availData.available) {
+        setError("Ese nick ya está cogido.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const supabase = createClient();
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -86,17 +110,15 @@ export function LoginForm({ authError }: LoginFormProps) {
       return;
     }
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    const loginRes = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ identifier, password }),
     });
 
-    if (signInError) {
-      setError(
-        signInError.message.toLowerCase().includes("invalid login credentials")
-          ? "Email o contraseña incorrectos."
-          : signInError.message
-      );
+    if (!loginRes.ok) {
+      const loginData = (await loginRes.json()) as { error?: string };
+      setError(loginData.error ?? INVALID_CREDENTIALS);
       setIsSubmitting(false);
       return;
     }
@@ -137,7 +159,7 @@ export function LoginForm({ authError }: LoginFormProps) {
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         {mode === "signup" && (
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="nombre">Nombre</Label>
+            <Label htmlFor="nombre">Nick</Label>
             <Input
               id="nombre"
               value={nombre}
@@ -147,22 +169,36 @@ export function LoginForm({ authError }: LoginFormProps) {
               required
             />
             <p className="text-xs text-[var(--muted)]">
-              Máximo {PLAYER_NAME_MAX_LENGTH} caracteres.
+              Máximo {PLAYER_NAME_MAX_LENGTH} caracteres. Debe ser único.
             </p>
           </div>
         )}
 
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-            required
-          />
-        </div>
+        {mode === "signin" ? (
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="identifier">Email o nick</Label>
+            <Input
+              id="identifier"
+              type="text"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              autoComplete="username"
+              required
+            />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              required
+            />
+          </div>
+        )}
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="password">Contraseña</Label>

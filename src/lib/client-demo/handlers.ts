@@ -88,6 +88,7 @@ export async function handleStaticDemoApi(
       faccion: (body?.faccion as string) || null,
     });
     if (!updated) return json({ error: "Usuario no encontrado" }, 404);
+    if ("error" in updated) return json({ error: updated.error }, 409);
     return json(updated);
   }
 
