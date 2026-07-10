@@ -19,7 +19,7 @@ export function PositionChangeIndicator({
   if (change === "up") {
     return (
       <ArrowUp
-        className={cn("h-3.5 w-3.5 shrink-0 text-emerald-600", className)}
+        className={cn("h-3.5 w-3.5 shrink-0 text-[#B4DB7B]", className)}
         aria-label="Sube posiciones"
       />
     );
@@ -27,7 +27,7 @@ export function PositionChangeIndicator({
 
   return (
     <ArrowDown
-      className={cn("h-3.5 w-3.5 shrink-0 text-red-500", className)}
+      className={cn("h-3.5 w-3.5 shrink-0 text-[#94310A]", className)}
       aria-label="Baja posiciones"
     />
   );

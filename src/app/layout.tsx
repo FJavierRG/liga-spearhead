@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cinzel, Crimson_Pro } from "next/font/google";
 import { Toaster } from "sonner";
+import { RataCornerDecoration } from "@/components/layout/rata-corner-decoration";
 import "./globals.css";
 
 const cinzel = Cinzel({
@@ -30,8 +31,9 @@ export default function RootLayout({
       lang="es"
       className={`${cinzel.variable} ${crimson.variable} h-full`}
     >
-      <body className="min-h-full font-sans text-[var(--foreground)] antialiased">
+      <body className="relative min-h-full font-sans text-[var(--foreground)] antialiased">
         {children}
+        <RataCornerDecoration />
         <Toaster position="top-center" richColors />
       </body>
     </html>
