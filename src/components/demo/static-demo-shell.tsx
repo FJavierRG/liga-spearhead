@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Navbar } from "@/components/layout/navbar";
+import { MainContentGate } from "@/components/layout/main-content-gate";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 import { getClientSessionUserId } from "@/lib/client-demo/session";
 import { getMockUserById } from "@/lib/mock/store";
 import { apiPath } from "@/lib/api-client";
@@ -28,17 +30,15 @@ export function StaticDemoShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   if (!ready) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-[var(--muted)]">
-        Cargando demo…
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (
     <>
       <Navbar profile={profile} />
-      <main className="mx-auto w-full px-4 py-6">{children}</main>
+      <MainContentGate key={profile?.id}>
+        <main className="mx-auto w-full px-4 py-6">{children}</main>
+      </MainContentGate>
     </>
   );
 }

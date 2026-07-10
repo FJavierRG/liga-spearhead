@@ -172,3 +172,17 @@ body {
 .row-highlight {
   background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
+
+@keyframes loading-bar-fill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.loading-bar-fill {
+  width: 0%;
+  animation: loading-bar-fill 2s ease-out forwards;
+}

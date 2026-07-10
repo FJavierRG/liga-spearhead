@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 import { apiFetch, apiPath, notifyDemoDataChanged } from "@/lib/api-client";
 import { MOCK_USER_IDS } from "@/lib/mock/seed";
 
@@ -21,12 +22,15 @@ export function MockLoginButton() {
   }
 
   return (
-    <Button
-      className="w-full"
-      disabled={isPending}
-      onClick={enterDemo}
-    >
-      {isPending ? "Entrando..." : "Entrar"}
-    </Button>
+    <>
+      {isPending && <LoadingScreen overlay />}
+      <Button
+        className="w-full"
+        disabled={isPending}
+        onClick={enterDemo}
+      >
+        {isPending ? "Entrando..." : "Entrar"}
+      </Button>
+    </>
   );
 }

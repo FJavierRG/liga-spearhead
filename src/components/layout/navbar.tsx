@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { AuthButton } from "@/components/auth/auth-button";
 import { MockUserSwitcher } from "@/components/auth/mock-user-switcher";
-import { CrestIcon } from "@/components/icons/crest-icon";
+import { LigaLogo } from "@/components/icons/liga-logo";
 import type { User } from "@/types/database";
 
 interface NavbarProps {
@@ -18,8 +18,9 @@ export function Navbar({ profile }: NavbarProps) {
           href="/"
           className="font-display flex items-center gap-2.5 text-sm font-semibold tracking-wide text-[var(--foreground)]"
         >
-          <CrestIcon className="h-5 w-5 text-[var(--accent)]" />
-          Liga Spearhead
+          <LigaLogo size="nav" className="shrink-0" />
+          Liga Sevilla
+          <span className="font-normal text-[var(--muted)]">AoS: Spearhead</span>
         </Link>
 
         <div className="flex items-center gap-2">

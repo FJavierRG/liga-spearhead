@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { MockLoginButton } from "@/components/auth/mock-login-button";
-import { CrestIcon } from "@/components/icons/crest-icon";
+import { LigaLogo } from "@/components/icons/liga-logo";
 import {
   Card,
   CardContent,
@@ -24,12 +24,12 @@ export function StaticDemoLogin() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--border-light)] bg-[var(--surface-muted)]">
-            <CrestIcon className="h-7 w-7 text-[var(--accent)]" />
-          </div>
-          <CardTitle className="text-xl">Liga Spearhead</CardTitle>
-          <CardDescription className="italic">
-            Demo · Age of Sigmar: Spearhead
+          <LigaLogo size="login" className="mx-auto mb-3" priority />
+          <CardTitle className="text-lg text-[var(--foreground)]">
+            Age of Sigmar: Spearhead
+          </CardTitle>
+          <CardDescription className="text-xl uppercase tracking-wider text-[var(--foreground)]">
+            Liga Sevilla
           </CardDescription>
         </CardHeader>
         <CardContent>

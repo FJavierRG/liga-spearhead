@@ -2,6 +2,7 @@
 
 import { useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 import { apiFetch, apiPath, notifyDemoDataChanged } from "@/lib/api-client";
 import { isMockMode, isStaticDemo } from "@/lib/config";
 import { MOCK_USER_IDS } from "@/lib/mock/seed";
@@ -45,7 +46,9 @@ export function MockUserSwitcher({ currentUserId }: MockUserSwitcherProps) {
   }
 
   return (
-    <select
+    <>
+      {isPending && <LoadingScreen overlay />}
+      <select
       value={currentUserId}
       disabled={isPending}
       onChange={(e) => switchUser(e.target.value)}
@@ -57,6 +60,7 @@ export function MockUserSwitcher({ currentUserId }: MockUserSwitcherProps) {
           {u.label}
         </option>
       ))}
-    </select>
+      </select>
+    </>
   );
 }

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { MainContentGate } from "@/components/layout/main-content-gate";
 import { Navbar } from "@/components/layout/navbar";
 import { getCurrentProfile, getSessionUser } from "@/lib/data/queries";
 
@@ -15,7 +16,9 @@ export default async function MainLayoutServer({
   return (
     <>
       <Navbar profile={profile} />
-      <main className="mx-auto w-full px-4 py-6">{children}</main>
+      <MainContentGate key={profile.id}>
+        <main className="mx-auto w-full px-4 py-6">{children}</main>
+      </MainContentGate>
     </>
   );
 }

@@ -19,3 +19,10 @@ export function getProductionSiteUrl(): string {
 export function getBasePath(): string {
   return process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 }
+
+/** Ruta a un archivo en /public (respeta basePath en GitHub Pages). */
+export function assetPath(path: string): string {
+  const base = getBasePath().replace(/\/$/, "");
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return `${base}${normalized}`;
+}

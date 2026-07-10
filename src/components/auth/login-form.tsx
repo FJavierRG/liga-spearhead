@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 import {
   PLAYER_NAME_MAX_LENGTH,
   sanitizePlayerName,
@@ -25,6 +26,7 @@ export function LoginForm({ authError }: LoginFormProps) {
   const [password, setPassword] = useState("");
   const [nombre, setNombre] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const [error, setError] = useState<string | null>(
     authError ? "No se pudo completar el inicio de sesión. Inténtalo de nuevo." : null
   );
@@ -78,6 +80,7 @@ export function LoginForm({ authError }: LoginFormProps) {
         return;
       }
 
+      setIsNavigating(true);
       router.push("/");
       router.refresh();
       return;
@@ -98,12 +101,14 @@ export function LoginForm({ authError }: LoginFormProps) {
       return;
     }
 
+    setIsNavigating(true);
     router.push("/");
     router.refresh();
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="relative flex flex-col gap-4">
+      {isNavigating && <LoadingScreen overlay />}
       <div className="grid grid-cols-2 gap-1 rounded-md bg-[var(--surface-muted)] p-1 text-sm">
         <button
           type="button"
