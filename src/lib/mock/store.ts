@@ -225,9 +225,16 @@ export function getMockAllAvailability(): Availability[] {
 
 function addAviso(
   store: ReturnType<typeof getStoreInternal>,
-  aviso: Omit<PlayerAviso, "id" | "created_at">
+  aviso: Omit<
+    PlayerAviso,
+    "id" | "created_at" | "actor_id" | "scheduled_match_id" | "match_id"
+  > &
+    Partial<Pick<PlayerAviso, "actor_id" | "scheduled_match_id" | "match_id">>
 ): void {
   store.avisos.push({
+    actor_id: null,
+    scheduled_match_id: null,
+    match_id: null,
     ...aviso,
     id: `aviso-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     created_at: new Date().toISOString(),
