@@ -7,12 +7,12 @@ import {
   getMockStore,
   getMockUserById,
   getMockAllAvailability,
-  getMockRecentNotifications,
+  getMockPlayerAvisos,
   type ScheduledMatchWithPlayers,
 } from "@/lib/mock/store";
 import type {
   Availability,
-  LeagueNotification,
+  PlayerAviso,
   Match,
   Season,
   StandingRow,
@@ -254,21 +254,23 @@ export async function getMatchesWithPlayers(
 
 export { type ScheduledMatchWithPlayers };
 
-export async function getRecentNotifications(
+export async function getPlayerAvisos(
+  playerId: string,
   limit = 20
-): Promise<LeagueNotification[]> {
+): Promise<PlayerAviso[]> {
   if (isMockMode()) {
-    return getMockRecentNotifications(limit);
+    return getMockPlayerAvisos(playerId, limit);
   }
 
   const supabase = await createClient();
   const { data } = await supabase
-    .from("league_notifications")
+    .from("player_avisos")
     .select("*")
+    .eq("jugador_id", playerId)
     .order("created_at", { ascending: false })
     .limit(limit);
 
-  return (data ?? []) as LeagueNotification[];
+  return (data ?? []) as PlayerAviso[];
 }
 
 export async function getPlayerScheduledMatches(

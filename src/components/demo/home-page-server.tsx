@@ -6,7 +6,7 @@ import {
   getMatchesWithPlayers,
   getPlayerAvailability,
   getPlayerScheduledMatches,
-  getRecentNotifications,
+  getPlayerAvisos,
   getStandings,
 } from "@/lib/data/queries";
 import { LigaView } from "@/components/liga-view";
@@ -22,14 +22,14 @@ export async function HomePageServer() {
     );
   }
 
-  const [players, standings, availability, scheduled, matches, notifications] =
+  const [players, standings, availability, scheduled, matches, avisos] =
     await Promise.all([
       getAllPlayers(),
       getStandings(season.id),
       getPlayerAvailability(profile.id),
       getPlayerScheduledMatches(profile.id),
       getMatchesWithPlayers(season.id),
-      getRecentNotifications(15),
+      getPlayerAvisos(profile.id, 15),
     ]);
 
   return (
@@ -41,7 +41,7 @@ export async function HomePageServer() {
       scheduled={scheduled}
       players={players}
       matches={matches}
-      notifications={notifications}
+      avisos={avisos}
     />
   );
 }

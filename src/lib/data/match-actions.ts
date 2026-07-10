@@ -1,4 +1,9 @@
 import { isMockMode } from "@/lib/config";
+import {
+  formatResultForPlayers,
+  getOpponentId,
+  insertPlayerAviso,
+} from "@/lib/data/avisos";
 import { getCurrentProfile } from "@/lib/data/queries";
 import { ensureWeeklySchedule } from "@/lib/data/scheduled-queries";
 import {
@@ -71,7 +76,7 @@ export async function updateMatchResultAction(
   const supabase = await createClient();
   const { data: existing, error: fetchError } = await supabase
     .from("matches")
-    .select("id, jugador_a, jugador_b")
+    .select("id, jugador_a, jugador_b, resultado")
     .eq("id", matchId)
     .single();
 
@@ -83,6 +88,15 @@ export async function updateMatchResultAction(
     return { error: "No puedes editar esta partida" };
   }
 
+  if (existing.resultado === resultado) {
+    const { data } = await supabase
+      .from("matches")
+      .select()
+      .eq("id", matchId)
+      .single();
+    return data!;
+  }
+
   const { data, error } = await supabase
     .from("matches")
     .update({ resultado })
@@ -91,6 +105,30 @@ export async function updateMatchResultAction(
     .single();
 
   if (error) return { error: error.message };
+
+  const opponentId = getOpponentId(
+    actorId,
+    existing.jugador_a,
+    existing.jugador_b
+  );
+  const { data: usersData } = await supabase
+    .from("users")
+    .select("id, nombre")
+    .in("id", [actorId, existing.jugador_a, existing.jugador_b]);
+  const nameOf = (id: string) =>
+    usersData?.find((u) => u.id === id)?.nombre ?? id;
+  const jugadorA = { nombre: nameOf(existing.jugador_a) };
+  const jugadorB = { nombre: nameOf(existing.jugador_b) };
+  const resultLabel = formatResultForPlayers(resultado, jugadorA, jugadorB);
+
+  await insertPlayerAviso({
+    jugador_id: opponentId,
+    tipo: "resultado_editado",
+    mensaje: `${nameOf(actorId)} ha cambiado el resultado del partido. Nuevo resultado: ${resultLabel}.`,
+    actor_id: actorId,
+    match_id: matchId,
+  });
+
   return data;
 }
 
@@ -125,59 +163,23 @@ export async function cancelScheduledMatchAction(
 
   if (error) return { error: error.message };
 
-  const freedPlayers = [row.jugador_a, row.jugador_b];
-
-  // Obtener nombres para los mensajes.
+  const opponentId = getOpponentId(actorId, row.jugador_a, row.jugador_b);
   const { data: usersData } = await supabase
     .from("users")
     .select("id, nombre")
-    .in("id", freedPlayers);
+    .in("id", [actorId, opponentId]);
   const nameOf = (id: string) =>
     usersData?.find((u) => u.id === id)?.nombre ?? id;
 
-  // Registrar la cancelación.
-  await supabase.from("league_notifications").insert({
+  await insertPlayerAviso({
+    jugador_id: opponentId,
     tipo: "partido_cancelado",
-    jugadores: freedPlayers,
-    semana: row.week_start,
-    mensaje: `Partido ${nameOf(row.jugador_a)} vs ${nameOf(row.jugador_b)} cancelado.`,
+    mensaje: `${nameOf(actorId)} ha cancelado vuestro partido programado.`,
+    actor_id: actorId,
+    scheduled_match_id: scheduledId,
   });
 
-  // Re-emparejar la semana para intentar cubrir el hueco.
   await ensureWeeklySchedule(row.week_start);
-
-  // Comprobar si los jugadores liberados tienen nuevo partido.
-  const { data: nowScheduled } = await supabase
-    .from("scheduled_matches")
-    .select("jugador_a, jugador_b")
-    .eq("week_start", row.week_start)
-    .eq("status", "programado");
-
-  const rematched = freedPlayers.filter((pid) =>
-    (nowScheduled ?? []).some((s) => s.jugador_a === pid || s.jugador_b === pid)
-  );
-  const unmatched = freedPlayers.filter((pid) => !rematched.includes(pid));
-
-  if (rematched.length > 0) {
-    const names = rematched.map(nameOf);
-    const joined = names.join(" y ");
-    await supabase.from("league_notifications").insert({
-      tipo: "reasignacion_exitosa",
-      jugadores: rematched,
-      semana: row.week_start,
-      mensaje: `${joined} ${names.length > 1 ? "han sido reasignados" : "ha sido reasignado"} para esta semana.`,
-    });
-  }
-  if (unmatched.length > 0) {
-    const names = unmatched.map(nameOf);
-    const joined = names.join(" y ");
-    await supabase.from("league_notifications").insert({
-      tipo: "sin_rival_disponible",
-      jugadores: unmatched,
-      semana: row.week_start,
-      mensaje: `${joined} ${names.length > 1 ? "se quedan" : "se queda"} sin partido esta semana por falta de disponibilidad.`,
-    });
-  }
 
   return { ok: true };
 }
@@ -195,10 +197,9 @@ export async function completeScheduledMatchAction(
 
   const supabase = await createClient();
 
-  // Obtener week_start antes de completar para poder re-emparejar después.
-  const { data: row } = await supabase
+  const { data: scheduled } = await supabase
     .from("scheduled_matches")
-    .select("week_start")
+    .select("week_start, jugador_a, jugador_b")
     .eq("id", scheduledId)
     .single();
 
@@ -216,9 +217,33 @@ export async function completeScheduledMatchAction(
     };
   }
 
-  // Re-emparejar la semana por si quedan jugadores sin partido.
-  if (row?.week_start) {
-    await ensureWeeklySchedule(row.week_start);
+  if (scheduled) {
+    const opponentId = getOpponentId(
+      actorId,
+      scheduled.jugador_a,
+      scheduled.jugador_b
+    );
+    const { data: usersData } = await supabase
+      .from("users")
+      .select("id, nombre")
+      .in("id", [actorId, scheduled.jugador_a, scheduled.jugador_b]);
+    const nameOf = (id: string) =>
+      usersData?.find((u) => u.id === id)?.nombre ?? id;
+    const jugadorA = { nombre: nameOf(scheduled.jugador_a) };
+    const jugadorB = { nombre: nameOf(scheduled.jugador_b) };
+    const resultLabel = formatResultForPlayers(resultado, jugadorA, jugadorB);
+    const match = data as Match;
+
+    await insertPlayerAviso({
+      jugador_id: opponentId,
+      tipo: "partido_finalizado",
+      mensaje: `${nameOf(actorId)} ha finalizado el partido. Resultado: ${resultLabel}.`,
+      actor_id: actorId,
+      scheduled_match_id: scheduledId,
+      match_id: match.id,
+    });
+
+    await ensureWeeklySchedule(scheduled.week_start);
   }
 
   return data as Match;

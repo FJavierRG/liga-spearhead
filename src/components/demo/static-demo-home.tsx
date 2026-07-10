@@ -35,7 +35,7 @@ export function StaticDemoHome() {
       scheduled={data.scheduled}
       players={data.players}
       matches={data.matches}
-      notifications={data.notifications}
+      avisos={data.avisos}
     />
   );
 }

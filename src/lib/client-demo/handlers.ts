@@ -3,7 +3,7 @@ import { computeStandings } from "@/lib/mock/seed";
 import {
   cancelMockScheduledMatch,
   completeMockScheduledMatch,
-  getMockRecentNotifications,
+  getMockPlayerAvisos,
   getMockScheduledWithPlayers,
   getMockStore,
   getMockUserById,
@@ -198,7 +198,7 @@ export function getStaticDemoHomeData(userId: string) {
     scheduled,
     players: [...store.users].sort((a, b) => a.nombre.localeCompare(b.nombre)),
     matches,
-    notifications: getMockRecentNotifications(15),
+    avisos: getMockPlayerAvisos(userId, 15),
   };
 }
 

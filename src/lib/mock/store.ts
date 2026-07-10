@@ -1,11 +1,11 @@
 import type {
   Availability,
-  LeagueNotification,
   Match,
-  NotificationType,
+  PlayerAviso,
   ScheduledMatch,
   User,
 } from "@/types/database";
+import { formatResultForPlayers, getOpponentId } from "@/lib/data/avisos";
 import { generateWeeklySchedule } from "@/lib/league/weekly-schedule";
 import { getWeekStartIso } from "@/lib/league/week";
 import { captureStandingsSnapshot } from "@/lib/league/position-snapshot";
@@ -95,6 +95,25 @@ export function updateMockMatch(
     return { error: "No puedes editar esta partida" };
   }
 
+  if (match.resultado === resultado) {
+    return match;
+  }
+
+  const actorName =
+    store.users.find((u) => u.id === playerId)?.nombre ?? playerId;
+  const jugadorA = store.users.find((u) => u.id === match.jugador_a)!;
+  const jugadorB = store.users.find((u) => u.id === match.jugador_b)!;
+  const resultLabel = formatResultForPlayers(resultado, jugadorA, jugadorB);
+  const opponentId = getOpponentId(playerId, match.jugador_a, match.jugador_b);
+
+  addAviso(store, {
+    jugador_id: opponentId,
+    tipo: "resultado_editado",
+    mensaje: `${actorName} ha cambiado el resultado del partido. Nuevo resultado: ${resultLabel}.`,
+    actor_id: playerId,
+    match_id: matchId,
+  });
+
   const currentStandings = computeStandings(
     store.users,
     store.matches,
@@ -134,6 +153,26 @@ export function completeMockScheduledMatch(
   if ("error" in created) return created;
 
   scheduled.status = "jugado";
+
+  const actorName =
+    store.users.find((u) => u.id === playerId)?.nombre ?? playerId;
+  const jugadorA = store.users.find((u) => u.id === scheduled.jugador_a)!;
+  const jugadorB = store.users.find((u) => u.id === scheduled.jugador_b)!;
+  const resultLabel = formatResultForPlayers(resultado, jugadorA, jugadorB);
+  const opponentId = getOpponentId(
+    playerId,
+    scheduled.jugador_a,
+    scheduled.jugador_b
+  );
+
+  addAviso(store, {
+    jugador_id: opponentId,
+    tipo: "partido_finalizado",
+    mensaje: `${actorName} ha finalizado el partido. Resultado: ${resultLabel}.`,
+    actor_id: playerId,
+    scheduled_match_id: scheduledId,
+    match_id: created.id,
+  });
 
   // Re-emparejar la semana por si quedan jugadores sin partido.
   ensureMockWeeklySchedule(scheduled.week_start);
@@ -182,46 +221,30 @@ export function getMockAllAvailability(): Availability[] {
   return getStoreInternal().availability.filter((a) => a.disponible);
 }
 
-// ─── Notifications ───────────────────────────────────────────────────────────
+// ─── Avisos ──────────────────────────────────────────────────────────────────
 
-function buildNotifMessage(
-  tipo: NotificationType,
-  names: string[]
-): string {
-  const joined = names.join(" y ");
-  switch (tipo) {
-    case "partido_cancelado":
-      return `Partido ${names.join(" vs ")} cancelado.`;
-    case "reasignacion_exitosa":
-      return `${joined} ${names.length > 1 ? "han sido reasignados" : "ha sido reasignado"} para esta semana.`;
-    case "sin_rival_disponible":
-      return `${joined} ${names.length > 1 ? "se quedan" : "se queda"} sin partido esta semana por falta de disponibilidad.`;
-  }
-}
-
-function addNotification(
+function addAviso(
   store: ReturnType<typeof getStoreInternal>,
-  tipo: NotificationType,
-  jugadores: string[],
-  semana: string
+  aviso: Omit<PlayerAviso, "id" | "created_at">
 ): void {
-  const names = jugadores.map(
-    (id) => store.users.find((u) => u.id === id)?.nombre ?? id
-  );
-  store.notifications.push({
-    id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    tipo,
-    jugadores,
-    semana,
-    mensaje: buildNotifMessage(tipo, names),
+  store.avisos.push({
+    ...aviso,
+    id: `aviso-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     created_at: new Date().toISOString(),
   });
 }
 
-export function getMockRecentNotifications(limit = 20): LeagueNotification[] {
+export function getMockPlayerAvisos(
+  playerId: string,
+  limit = 20
+): PlayerAviso[] {
   const store = getStoreInternal();
-  return [...store.notifications]
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  return [...store.avisos]
+    .filter((a) => a.jugador_id === playerId)
+    .sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )
     .slice(0, limit);
 }
 
@@ -276,30 +299,22 @@ export function cancelMockScheduledMatch(
   if (match.jugador_a !== playerId && match.jugador_b !== playerId) return false;
 
   const { jugador_a, jugador_b, week_start } = match;
-  const freedPlayers = [jugador_a, jugador_b];
+  const actorName =
+    store.users.find((u) => u.id === playerId)?.nombre ?? playerId;
+  const opponentId = getOpponentId(playerId, jugador_a, jugador_b);
 
-  addNotification(store, "partido_cancelado", freedPlayers, week_start);
+  addAviso(store, {
+    jugador_id: opponentId,
+    tipo: "partido_cancelado",
+    mensaje: `${actorName} ha cancelado vuestro partido programado.`,
+    actor_id: playerId,
+    scheduled_match_id: matchId,
+  });
 
   match.status = "cancelado";
 
   // Intentar re-emparejar a los jugadores liberados (y cualquier otro sin partido).
   ensureMockWeeklySchedule(week_start);
-
-  // Determinar cuáles consiguieron nuevo partido.
-  const nowScheduled = store.scheduled_matches.filter(
-    (s) => s.week_start === week_start && s.status === "programado"
-  );
-  const rematched = freedPlayers.filter((pid) =>
-    nowScheduled.some((s) => s.jugador_a === pid || s.jugador_b === pid)
-  );
-  const unmatched = freedPlayers.filter((pid) => !rematched.includes(pid));
-
-  if (rematched.length > 0) {
-    addNotification(store, "reasignacion_exitosa", rematched, week_start);
-  }
-  if (unmatched.length > 0) {
-    addNotification(store, "sin_rival_disponible", unmatched, week_start);
-  }
 
   return true;
 }

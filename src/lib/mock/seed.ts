@@ -1,7 +1,7 @@
 import type {
   Availability,
-  LeagueNotification,
   Match,
+  PlayerAviso,
   ScheduledMatch,
   Season,
   StandingRow,
@@ -203,7 +203,7 @@ export interface MockStore {
   matches: Match[];
   availability: Availability[];
   scheduled_matches: ScheduledMatch[];
-  notifications: LeagueNotification[];
+  avisos: PlayerAviso[];
 }
 
 function buildInitialSchedule(): ScheduledMatch[] {
@@ -217,24 +217,26 @@ function buildInitialSchedule(): ScheduledMatch[] {
   );
 }
 
-const weekStart = getWeekStartIso();
-
-const SEED_NOTIFICATIONS: LeagueNotification[] = [
+const SEED_AVISOS: PlayerAviso[] = [
   {
-    id: "notif-seed-1",
+    id: "aviso-seed-1",
+    jugador_id: MOCK_USER_IDS.ana,
     tipo: "partido_cancelado",
-    jugadores: [MOCK_USER_IDS.borja, MOCK_USER_IDS.diana],
-    semana: weekStart,
-    mensaje: "Partido Borja vs Diana cancelado.",
+    mensaje: "Borja ha cancelado vuestro partido programado.",
+    actor_id: MOCK_USER_IDS.borja,
+    scheduled_match_id: null,
+    match_id: null,
     created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
   },
   {
-    id: "notif-seed-2",
-    tipo: "reasignacion_exitosa",
-    jugadores: [MOCK_USER_IDS.borja, MOCK_USER_IDS.diana],
-    semana: weekStart,
-    mensaje: "Borja y Diana han sido reasignados para esta semana.",
-    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000 + 500).toISOString(),
+    id: "aviso-seed-2",
+    jugador_id: MOCK_USER_IDS.borja,
+    tipo: "partido_finalizado",
+    mensaje: "Diana ha finalizado el partido. Resultado: Diana.",
+    actor_id: MOCK_USER_IDS.diana,
+    scheduled_match_id: null,
+    match_id: null,
+    created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
   },
 ];
 
@@ -245,7 +247,7 @@ export function createSeedStore(): MockStore {
     matches: structuredClone(MOCK_MATCHES),
     availability: structuredClone(MOCK_AVAILABILITY),
     scheduled_matches: buildInitialSchedule(),
-    notifications: structuredClone(SEED_NOTIFICATIONS),
+    avisos: structuredClone(SEED_AVISOS),
   };
 }
 

@@ -46,12 +46,7 @@ Las estadísticas y clasificaciones se calcularán a partir de los datos almacen
 
 Toda la autenticación se delegará en Supabase Auth.
 
-No existirán cuentas locales ni contraseñas propias de la aplicación.
-
-Inicialmente se admitirán los siguientes proveedores OAuth:
-
-- Google
-- Discord
+Se usará el proveedor de email/contraseña propio de Supabase Auth (sin OAuth de terceros).
 
 Supabase gestionará completamente:
 

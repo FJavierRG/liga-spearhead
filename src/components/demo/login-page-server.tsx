@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { isMockMode } from "@/lib/config";
 import { getSessionUser } from "@/lib/data/queries";
-import { AuthButton } from "@/components/auth/auth-button";
+import { LoginForm } from "@/components/auth/login-form";
 import { MockLoginButton } from "@/components/auth/mock-login-button";
 import { CrestIcon } from "@/components/icons/crest-icon";
 import {
@@ -12,7 +12,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export async function LoginPageServer() {
+export async function LoginPageServer({
+  authError = false,
+}: {
+  authError?: boolean;
+}) {
   const user = await getSessionUser();
   if (user) redirect("/");
 
@@ -34,9 +38,7 @@ export async function LoginPageServer() {
           {mockMode ? (
             <MockLoginButton />
           ) : (
-            <div className="flex flex-col gap-3">
-              <AuthButton />
-            </div>
+            <LoginForm authError={authError} />
           )}
         </CardContent>
       </Card>

@@ -45,16 +45,15 @@ En el panel de Supabase → **SQL Editor**, ejecuta el contenido de:
 supabase/migrations/001_initial_schema.sql
 ```
 
-Esto crea tablas, políticas RLS, funciones de clasificación/hándicap y una temporada activa de ejemplo.
+Eso crea el esquema completo: tablas, políticas RLS, funciones y una temporada activa de ejemplo.
 
-### 3. Autenticación OAuth
+### 3. Autenticación
 
-En Supabase → **Authentication → Providers**, activa:
+Se usa email + contraseña con Supabase Auth (sin proveedores OAuth de terceros).
 
-- **Google**
-- **Discord**
+Por defecto Supabase pide confirmar el email al crear la cuenta. Si quieres que el registro sea inmediato en desarrollo, desactívalo en **Authentication → Providers → Email → Confirm email**.
 
-En **Authentication → URL Configuration**, añade la URL de callback:
+En **Authentication → URL Configuration**, añade la URL de callback (se usa para el enlace de confirmación de email):
 
 ```
 http://localhost:3000/auth/callback
@@ -118,4 +117,4 @@ Los pesos del algoritmo están en `src/lib/league/matching.ts` (`MATCH_WEIGHTS`)
 
 ## Despliegue
 
-Compatible con [Vercel](https://vercel.com). Configura las mismas variables de entorno y actualiza las URLs de callback en Supabase.
+Compatible con [Vercel](https://vercel.com) o [Railway](https://railway.app). Configura las mismas variables de entorno y actualiza la URL de callback en Supabase.

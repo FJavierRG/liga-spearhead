@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { StandingsTable } from "@/components/standings-table";
-import { NotificationsPanel } from "@/components/notifications-panel";
+import { AvisosPanel } from "@/components/avisos-panel";
 import { HistorialPanel } from "@/components/historial-panel";
 import { ReglasPanel } from "@/components/reglas-panel";
 import {
@@ -16,7 +16,7 @@ import { SectionTitle } from "@/components/ui/section-title";
 import { formatWeekRange } from "@/lib/league/week";
 import { cn } from "@/lib/utils";
 import type { MatchWithPlayers, ScheduledMatchWithPlayers } from "@/lib/data/queries";
-import type { Availability, LeagueNotification, Season, StandingRow, User } from "@/types/database";
+import type { Availability, PlayerAviso, Season, StandingRow, User } from "@/types/database";
 
 const AvailabilityPanel = dynamic(
   () =>
@@ -46,7 +46,7 @@ interface LigaViewProps {
   scheduled: ScheduledMatchWithPlayers[];
   players: User[];
   matches: MatchWithPlayers[];
-  notifications: LeagueNotification[];
+  avisos: PlayerAviso[];
 }
 
 export function LigaView({
@@ -57,7 +57,7 @@ export function LigaView({
   scheduled,
   players,
   matches,
-  notifications,
+  avisos,
 }: LigaViewProps) {
   const weekLabel = formatWeekRange(0);
   const [section, setSection] = useState<LigaSection>("tablon");
@@ -102,7 +102,7 @@ export function LigaView({
             scheduled={scheduled}
             players={players}
             weekLabel={weekLabel}
-            notifications={notifications}
+            avisos={avisos}
           />
         )}
 
@@ -135,7 +135,7 @@ function TablonContent({
   scheduled,
   players,
   weekLabel,
-  notifications,
+  avisos,
 }: {
   profile: User;
   season: Season;
@@ -144,7 +144,7 @@ function TablonContent({
   scheduled: ScheduledMatchWithPlayers[];
   players: User[];
   weekLabel: string;
-  notifications: LeagueNotification[];
+  avisos: PlayerAviso[];
 }) {
   return (
     <div className="mx-auto flex w-full max-w-7xl gap-10 pb-12">
@@ -160,7 +160,7 @@ function TablonContent({
               />
             </div>
           </div>
-          <NotificationsPanel notifications={notifications} />
+          <AvisosPanel avisos={avisos} />
         </div>
       </aside>
 
@@ -178,7 +178,7 @@ function TablonContent({
         </section>
 
         <section className="lg:hidden">
-          <NotificationsPanel notifications={notifications} />
+          <AvisosPanel avisos={avisos} />
         </section>
 
         <AvailabilityPanel

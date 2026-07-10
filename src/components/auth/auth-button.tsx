@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import type { User } from "@/types/database";
-
 import { apiFetch, apiPath, appPath } from "@/lib/api-client";
 import { isMockMode, isStaticDemo } from "@/lib/config";
 
@@ -14,6 +13,8 @@ interface AuthButtonProps {
 
 export function AuthButton({ profile }: AuthButtonProps) {
   const router = useRouter();
+
+  if (!profile) return null;
 
   async function signOut() {
     if (isMockMode() || isStaticDemo()) {
@@ -30,39 +31,13 @@ export function AuthButton({ profile }: AuthButtonProps) {
     router.refresh();
   }
 
-  if (profile) {
-    return (
-      <div className="flex items-center gap-3">
-        <span className="hidden text-sm text-neutral-600 sm:inline">
-          {profile.nombre}
-        </span>
-        <Button variant="outline" size="sm" onClick={signOut}>
-          Cerrar sesión
-        </Button>
-      </div>
-    );
-  }
-
-  if (isMockMode() || isStaticDemo()) return null;
-
-  const supabase = createClient();
-
-  async function signInWith(provider: "google" | "discord") {
-    await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-  }
-
   return (
-    <div className="flex flex-col gap-2 sm:flex-row">
-      <Button size="sm" onClick={() => signInWith("google")}>
-        Google
-      </Button>
-      <Button size="sm" variant="outline" onClick={() => signInWith("discord")}>
-        Discord
+    <div className="flex items-center gap-3">
+      <span className="hidden text-sm text-neutral-600 sm:inline">
+        {profile.nombre}
+      </span>
+      <Button variant="outline" size="sm" onClick={signOut}>
+        Cerrar sesión
       </Button>
     </div>
   );

@@ -83,18 +83,19 @@ export interface HandicapResult {
   beneficiario: string;
 }
 
-export type NotificationType =
+export type AvisoType =
   | "partido_cancelado"
-  | "reasignacion_exitosa"
-  | "sin_rival_disponible";
+  | "partido_finalizado"
+  | "resultado_editado";
 
-export interface LeagueNotification {
+export interface PlayerAviso {
   id: string;
-  tipo: NotificationType;
-  /** IDs de los jugadores afectados. */
-  jugadores: string[];
-  semana: string;
+  jugador_id: string;
+  tipo: AvisoType;
   mensaje: string;
+  actor_id: string | null;
+  scheduled_match_id: string | null;
+  match_id: string | null;
   created_at: string;
 }
 
@@ -108,12 +109,6 @@ export interface RecommendedMatch {
 export const ACTIVE_TIME_SLOTS: { key: "manana" | "tarde"; label: string }[] = [
   { key: "manana", label: "Mañana" },
   { key: "tarde", label: "Tarde" },
-];
-
-/** @deprecated Usar ACTIVE_TIME_SLOTS. Se mantiene por compatibilidad con BD. */
-export const TIME_SLOTS: { key: TimeSlot; label: string }[] = [
-  ...ACTIVE_TIME_SLOTS,
-  { key: "noche", label: "Noche" },
 ];
 
 export const DAY_LABELS = [
