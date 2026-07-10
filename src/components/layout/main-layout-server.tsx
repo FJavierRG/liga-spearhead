@@ -16,7 +16,7 @@ export default async function MainLayoutServer({
   return (
     <>
       <Navbar profile={profile} />
-      <MainContentGate key={profile.id}>
+      <MainContentGate key={user.id}>
         <main className="mx-auto w-full px-4 py-6">{children}</main>
       </MainContentGate>
     </>
