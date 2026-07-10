@@ -1,3 +1,6 @@
+/** Máximo de tarjetas en Novedades (liga + personales, mezcladas). */
+export const NOVEDADES_FEED_LIMIT = 6;
+
 /** Activa el modo demo local (sin Supabase). */
 export function isMockMode(): boolean {
   return (

@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import { NOVEDADES_FEED_LIMIT } from "@/lib/config";
 import type { LigaNovedad, PlayerAviso } from "@/types/database";
 import { SectionTitle } from "@/components/ui/section-title";
 import { cn } from "@/lib/utils";
@@ -43,15 +44,17 @@ export function AvisosPanel({ avisos, ligaNovedades }: AvisosPanelProps) {
       ...avisos.map((item) => ({ kind: "personal" as const, item })),
     ];
 
-    return items.sort(
-      (a, b) =>
-        new Date(
-          b.kind === "liga" ? b.item.created_at : b.item.created_at
-        ).getTime() -
-        new Date(
-          a.kind === "liga" ? a.item.created_at : a.item.created_at
-        ).getTime()
-    );
+    return items
+      .sort(
+        (a, b) =>
+          new Date(
+            b.kind === "liga" ? b.item.created_at : b.item.created_at
+          ).getTime() -
+          new Date(
+            a.kind === "liga" ? a.item.created_at : a.item.created_at
+          ).getTime()
+      )
+      .slice(0, NOVEDADES_FEED_LIMIT);
   }, [avisos, ligaNovedades]);
 
   return (

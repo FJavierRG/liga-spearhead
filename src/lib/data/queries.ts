@@ -1,4 +1,4 @@
-import { isMockMode } from "@/lib/config";
+import { isMockMode, NOVEDADES_FEED_LIMIT } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
 import { getScheduledMatchesForPlayer } from "@/lib/data/scheduled-queries";
 import { getWeekDates, getScheduleTargetWeekStart } from "@/lib/league/week";
@@ -256,7 +256,7 @@ export { type ScheduledMatchWithPlayers };
 
 export async function getPlayerAvisos(
   playerId: string,
-  limit = 20
+  limit = NOVEDADES_FEED_LIMIT
 ): Promise<PlayerAviso[]> {
   if (isMockMode()) {
     return getMockPlayerAvisos(playerId, limit);

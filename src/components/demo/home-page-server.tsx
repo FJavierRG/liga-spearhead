@@ -9,6 +9,7 @@ import {
   getPlayerAvisos,
   getStandings,
 } from "@/lib/data/queries";
+import { NOVEDADES_FEED_LIMIT } from "@/lib/config";
 import { getLigaNovedades } from "@/lib/data/liga-novedades";
 import { maybeRunWeeklySchedules } from "@/lib/league/schedule-runner";
 import { LigaView } from "@/components/liga-view";
@@ -33,8 +34,8 @@ export async function HomePageServer() {
       getPlayerAvailability(profile.id),
       getPlayerScheduledMatches(profile.id),
       getMatchesWithPlayers(season.id),
-      getPlayerAvisos(profile.id, 15),
-      getLigaNovedades(season.id, 15),
+      getPlayerAvisos(profile.id, NOVEDADES_FEED_LIMIT),
+      getLigaNovedades(season.id, NOVEDADES_FEED_LIMIT),
     ]);
 
   return (

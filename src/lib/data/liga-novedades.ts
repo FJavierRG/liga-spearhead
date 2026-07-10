@@ -1,4 +1,4 @@
-import { isMockMode } from "@/lib/config";
+import { isMockMode, NOVEDADES_FEED_LIMIT } from "@/lib/config";
 import { getStandings } from "@/lib/data/queries";
 import { buildPartidoFinalizadoMensaje } from "@/lib/league/liga-novedad-message";
 import {
@@ -43,7 +43,7 @@ export async function publishPartidoFinalizadoNovedad(
 
 export async function getLigaNovedades(
   seasonId: string,
-  limit = 20
+  limit = NOVEDADES_FEED_LIMIT
 ): Promise<LigaNovedad[]> {
   if (isMockMode()) {
     return getMockLigaNovedades(seasonId, limit);
