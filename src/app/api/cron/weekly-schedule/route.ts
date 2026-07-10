@@ -1,13 +1,9 @@
 import { NextResponse } from "next/server";
-import { ensureWeeklySchedule } from "@/lib/data/scheduled-queries";
-import { getScheduleTargetWeekStart } from "@/lib/league/week";
+import { maybeRunWeeklySchedules } from "@/lib/league/schedule-runner";
 
 /**
- * Cron job: lunes 01:00 hora española (00:00 UTC invierno / necesita ajuste en verano).
- * Genera los emparejamientos de la semana que acaba de empezar.
- *
- * Vercel inyecta automáticamente Authorization: Bearer $CRON_SECRET.
- * En local se puede llamar con ese mismo header para probar.
+ * Endpoint opcional para forzar emparejamientos (p. ej. pruebas manuales).
+ * En producción el servidor los lanza solo; no hace falta configurar nada en Railway.
  */
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
@@ -17,11 +13,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const weekStart = getScheduleTargetWeekStart();
-
   try {
-    await ensureWeeklySchedule(weekStart);
-    return NextResponse.json({ ok: true, weekStart });
+    await maybeRunWeeklySchedules();
+    return NextResponse.json({ ok: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ error: message }, { status: 500 });

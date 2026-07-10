@@ -63,7 +63,7 @@ function SectionButton({
       className={cn(
         "flex items-center gap-3 text-left text-sm transition-colors",
         compact
-          ? "flex-1 flex-col gap-1 rounded-none px-2 py-2.5 text-center"
+          ? "flex-1 flex-col gap-0.5 rounded-none px-1.5 py-2 text-center"
           : "w-full rounded-md px-3 py-2.5",
         isActive
           ? compact
@@ -77,10 +77,16 @@ function SectionButton({
       )}
     >
       <span className="relative shrink-0">
-        <Icon className={cn("h-4 w-4", compact && "h-[1.125rem] w-[1.125rem]")} aria-hidden />
+        <Icon
+          className={cn("h-4 w-4", compact && "h-3.5 w-3.5")}
+          aria-hidden
+        />
         {showReglasAlert && (
           <span
-            className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-[color-mix(in_srgb,var(--background)_94%,#000)]"
+            className={cn(
+              "absolute -right-1 -top-1 rounded-full bg-red-500 ring-2 ring-[color-mix(in_srgb,var(--background)_94%,#000)]",
+              compact ? "h-1.5 w-1.5" : "h-2 w-2"
+            )}
             aria-hidden
           />
         )}
@@ -89,7 +95,7 @@ function SectionButton({
         <span
           className={cn(
             "font-display min-w-0 tracking-wide",
-            compact ? "text-xs leading-tight" : "flex-1 truncate"
+            compact ? "text-[10px] leading-tight" : "flex-1 truncate"
           )}
         >
           {label}

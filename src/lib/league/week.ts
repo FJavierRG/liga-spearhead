@@ -1,10 +1,61 @@
-/** Utilidades de semana (lunes–domingo, fechas locales). */
+/** Utilidades de semana (lunes–domingo, fechas en Europe/Madrid). */
+
+const SCHEDULE_TIMEZONE = "Europe/Madrid";
+
+/** Hora peninsular del cron principal (viernes). */
+export const WEEKLY_SCHEDULE_CRON_HOUR = 20;
+
+/** Hora peninsular de los repasos de fin de semana (sábado y domingo). */
+export const WEEKEND_SCHEDULE_CRON_HOUR = 23;
 
 function toLocalDateStr(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+const MADRID_WEEKDAY: Record<string, number> = {
+  Sun: 0,
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6,
+};
+
+function getMadridScheduleContext(reference: Date): {
+  weekday: number;
+  hour: number;
+} {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: SCHEDULE_TIMEZONE,
+    weekday: "short",
+    hour: "numeric",
+    hour12: false,
+  }).formatToParts(reference);
+
+  const weekdayLabel = parts.find((p) => p.type === "weekday")?.value ?? "Mon";
+  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? "0");
+
+  return {
+    weekday: MADRID_WEEKDAY[weekdayLabel] ?? 1,
+    hour,
+  };
+}
+
+/** Tras el cron del viernes (o sábado/domingo): mostrar la semana siguiente. */
+export function isAfterFridayScheduleCron(reference = new Date()): boolean {
+  const { weekday, hour } = getMadridScheduleContext(reference);
+  if (weekday === 6 || weekday === 0) return true;
+  if (weekday === 5) return hour >= WEEKLY_SCHEDULE_CRON_HOUR;
+  return false;
+}
+
+/** Desplazamiento de semana para partidos programados visibles en la app. */
+export function getScheduleWeekOffset(reference = new Date()): number {
+  return isAfterFridayScheduleCron(reference) ? 1 : 0;
 }
 
 export function getWeekMonday(reference = new Date(), weekOffset = 0): Date {
@@ -38,13 +89,12 @@ export function formatWeekRange(weekOffset = 0, reference = new Date()): string 
   return `${fmt(start)} a ${fmt(end)}`;
 }
 
-export function isSundayNight(reference = new Date()): boolean {
-  return reference.getDay() === 0 && reference.getHours() >= 20;
+/** Semana cuyos emparejamientos debe ver el jugador al cargar la app. */
+export function getScheduleTargetWeekStart(reference = new Date()): string {
+  return getWeekStartIso(reference, getScheduleWeekOffset(reference));
 }
 
-export function getScheduleTargetWeekStart(reference = new Date()): string {
-  if (isSundayNight(reference)) {
-    return getWeekStartIso(reference, 1);
-  }
-  return getWeekStartIso(reference, 0);
+/** Semana que genera el cron del viernes (siempre la siguiente). */
+export function getCronScheduleWeekStart(reference = new Date()): string {
+  return getWeekStartIso(reference, 1);
 }

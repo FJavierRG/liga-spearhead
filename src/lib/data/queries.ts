@@ -277,8 +277,8 @@ export async function getPlayerScheduledMatches(
   playerId: string,
   weekStart?: string
 ): Promise<ScheduledMatchWithPlayers[]> {
-  // getScheduleTargetWeekStart apunta a la semana siguiente los domingos por la noche,
-  // para que los jugadores ya vean sus partidos de la próxima semana al fin del domingo.
+  // getScheduleTargetWeekStart apunta a la semana siguiente tras el cron del viernes,
+  // para que los jugadores vean los emparejamientos con antelación al lunes.
   const start = weekStart ?? getScheduleTargetWeekStart();
   return getScheduledMatchesForPlayer(playerId, start);
 }

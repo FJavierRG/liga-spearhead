@@ -59,13 +59,24 @@ La disponibilidad puede modificarse en cualquier momento.
 
 ## Sistema de emparejamientos
 
-Los emparejamientos no son manuales.
+Los emparejamientos no son manuales. La web asigna partidos programados según disponibilidad y estado de la liga.
 
-La web propone automáticamente los siguientes enfrentamientos.
+No existen rondas fijas. La semana va de lunes a domingo.
 
-No existen rondas.
+### Calendario
 
-Cada vez que un jugador actualiza su disponibilidad o se registra el resultado de una partida, el sistema puede recalcular las propuestas.
+| Momento | Qué ocurre |
+|---------|------------|
+| Durante la semana | Los jugadores actualizan disponibilidad para la semana siguiente |
+| Viernes 20:00 | Emparejamiento principal de la semana siguiente |
+| Sábado 23:00 | Segunda oportunidad para quien sigue sin partido |
+| Domingo 23:00 | Última segunda oportunidad |
+
+Actualizar disponibilidad **no** dispara un recálculo inmediato (evita abuso). Los repasos de fin de semana recogen a quien añadió huecos después del viernes.
+
+Si un partido se cancela, se intenta reemparejar a los afectados con la disponibilidad restante de esa semana.
+
+Detalle técnico de implementación: [`docs/EMPAREJAMIENTOS.md`](docs/EMPAREJAMIENTOS.md).
 
 ---
 
@@ -140,7 +151,7 @@ Al registrarse un resultado:
 
 - Se actualiza la clasificación.
 - Se recalculan los hándicaps.
-- Se regeneran los emparejamientos recomendados.
+- Los emparejamientos de la semana en curso no se regeneran por completo; solo se ajustan si un partido programado se cancela o completa.
 
 ---
 

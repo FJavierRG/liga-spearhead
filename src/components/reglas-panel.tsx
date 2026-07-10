@@ -92,15 +92,18 @@ export function ReglasPanel() {
         <RuleBlock title="Disponibilidad">
           <p className="text-[var(--muted)]">
             Cada jugador indica en la web en qué días y franjas (mañana o tarde) puede
-            jugar durante los próximos 7 días. El sistema de emparejamientos se encarga de asignar los partidos de forma automática.
+            jugar durante la semana correspondiente. Actualiza tu disponibilidad antes
+            del viernes para que el sistema pueda emparejarte la semana siguiente.
           </p>
         </RuleBlock>
 
         <RuleBlock title="Emparejamientos">
           <p className="text-[var(--muted)]">
-            Los emparejamientos se calculan los
-            lunes a las 01:00. Si un partido se cancela, se intenta reasignar a
-            los jugadores afectados con la disponibilidad restante de la semana.
+            Los emparejamientos se calculan los viernes a las 20:00 para la semana
+            siguiente (de lunes a domingo). El sábado y el domingo a las 23:00 hay
+            un repaso que solo empareja a quien sigue sin partido asignado. Si un
+            partido se cancela, se intenta reasignar a los jugadores afectados con
+            la disponibilidad restante de la semana.
           </p>
           <p className="text-[var(--muted)]">Prioridades del algoritmo:</p>
           <ol className="list-inside list-decimal space-y-1 text-[var(--muted)]">

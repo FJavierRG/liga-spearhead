@@ -9,6 +9,7 @@ import {
   getPlayerAvisos,
   getStandings,
 } from "@/lib/data/queries";
+import { maybeRunWeeklySchedules } from "@/lib/league/schedule-runner";
 import { LigaView } from "@/components/liga-view";
 
 export async function HomePageServer() {
@@ -21,6 +22,8 @@ export async function HomePageServer() {
       <p className="text-center text-[var(--muted)]">Sin temporada activa.</p>
     );
   }
+
+  await maybeRunWeeklySchedules();
 
   const [players, standings, availability, scheduled, matches, avisos] =
     await Promise.all([

@@ -2,17 +2,30 @@
 
 Web para gestionar una liga local de **Age of Sigmar: Spearhead**.
 
-Incluye clasificación dinámica, registro de partidas, disponibilidad semanal, hándicap de PV y emparejamientos recomendados.
+Incluye clasificación dinámica, registro de partidas, disponibilidad semanal, hándicap de PV y emparejamientos automáticos.
 
 ## Stack
 
-- **Frontend:** Next.js, React, Tailwind CSS, shadcn/ui, TanStack Table
-- **Backend:** Supabase (PostgreSQL, Auth, RLS)
+- **App:** Next.js (React), desplegada en **[Railway](https://railway.app)**
+- **Datos y auth:** Supabase (PostgreSQL, Auth, RLS)
+- **UI:** Tailwind CSS, shadcn/ui, Lucide
+
+> La base de datos y los usuarios viven en Supabase. La app (frontend + lógica de servidor) vive en Railway. No se usa Vercel para el despliegue de producción.
+
+## Documentación adicional
+
+| Documento | Contenido |
+|-----------|-----------|
+| [`docs/EMPAREJAMIENTOS.md`](docs/EMPAREJAMIENTOS.md) | Calendario, cómo salta el emparejamiento, variables necesarias |
+| [`diseño_backend.md`](diseño_backend.md) | Arquitectura y reglas de negocio |
+| [`diseño_frontend.md`](diseño_frontend.md) | Interfaz y UX |
+| [`idea_original.md`](idea_original.md) | Diseño conceptual de la liga |
 
 ## Requisitos
 
 - Node.js 20+ (recomendado 22.13+)
-- Cuenta en [Supabase](https://supabase.com)
+- Proyecto en [Supabase](https://supabase.com)
+- Servicio en [Railway](https://railway.app) (producción)
 
 ### Nota sobre `npx` en Windows
 
@@ -22,48 +35,41 @@ Si al ejecutar `npx` Windows te pide elegir un programa, suele deberse a un arch
 2. Usar `npm run dev` / `npm install` en lugar de `npx` cuando sea posible
 3. Eliminar el archivo erróneo `C:\Windows\System32\npx` (requiere permisos de administrador)
 
-## Configuración
+## Configuración local
 
 ### 1. Variables de entorno
-
-Copia el ejemplo y rellena tus credenciales de Supabase:
 
 ```powershell
 Copy-Item .env.local.example .env.local
 ```
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key
-```
+Rellena al menos las credenciales de Supabase. En producción también necesitas `SUPABASE_SERVICE_ROLE_KEY` (ver [Emparejamientos](docs/EMPAREJAMIENTOS.md)).
 
 ### 2. Base de datos
 
-En el panel de Supabase → **SQL Editor**, ejecuta el contenido de:
+En Supabase → **SQL Editor**, ejecuta las migraciones de `supabase/migrations/` **en orden por nombre de archivo**:
 
-```
-supabase/migrations/001_initial_schema.sql
-```
-
-Eso crea el esquema completo: tablas, políticas RLS, funciones y una temporada activa de ejemplo.
+1. `001_initial_schema.sql`
+2. `002_player_name_constraints.sql` (o `002_reglas_pendientes.sql` si aplica en tu historial)
+3. `003_scheduled_matches.sql`
+4. `003_unique_player_nombre.sql`
 
 ### 3. Autenticación
 
-Se usa email + contraseña con Supabase Auth (sin proveedores OAuth de terceros).
+Email + contraseña con Supabase Auth.
 
-Por defecto Supabase pide confirmar el email al crear la cuenta. Si quieres que el registro sea inmediato en desarrollo, desactívalo en **Authentication → Providers → Email → Confirm email**.
+En desarrollo puedes desactivar la confirmación de email en **Authentication → Providers → Email**.
 
-En **Authentication → URL Configuration**, añade la URL de callback (se usa para el enlace de confirmación de email):
+En **Authentication → URL Configuration**, añade:
 
 ```
 http://localhost:3000/auth/callback
+https://tu-dominio.railway.app/auth/callback
 ```
-
-(Añade también tu dominio de producción cuando despliegues.)
 
 ### 4. Primer administrador
 
-Tras el primer inicio de sesión, promueve tu usuario en SQL:
+Tras el primer inicio de sesión:
 
 ```sql
 UPDATE users SET rol = 'administrador'
@@ -74,47 +80,57 @@ WHERE auth_user_id = 'uuid-de-auth-users';
 
 ### Modo demo (sin Supabase)
 
-Para probar la web en local **sin crear ningún servicio**, con datos de ejemplo y login directo:
-
 ```powershell
 npm run dev:demo
 ```
 
-Abre [http://localhost:3000](http://localhost:3000) y elige un usuario:
+Abre [http://localhost:3000](http://localhost:3000). Datos en memoria; se reinician al parar el servidor.
 
-- **Carlos (Admin)** — administrador
-- **Ana, Borja, Diana, Erik** — jugadores con partidas y disponibilidad de ejemplo
-
-Los datos viven en memoria: si reinicias el servidor, vuelven al estado inicial. Ideal para enseñar la web a un compañero antes de decidir si desplegar.
-
-### Modo producción (con Supabase)
+### Modo producción local (con Supabase)
 
 ```powershell
 npm install
 npm run dev
 ```
 
-Abre [http://localhost:3000](http://localhost:3000).
+## Emparejamientos (resumen)
 
-## Secciones
+Los partidos de la semana siguiente se calculan automáticamente **desde el código**, sin configurar tareas en Railway:
 
-| Ruta | Descripción |
-|------|-------------|
-| `/` | Inicio: rival recomendado, hándicap, posición, últimos resultados |
-| `/clasificacion` | Tabla de clasificación |
-| `/partidas` | Registrar partidas e historial |
-| `/disponibilidad` | Cuadrícula semanal (mañana/tarde/noche) |
-| `/perfil` | Tu perfil, estadísticas e historial |
-| `/perfil/[id]` | Perfil de otro jugador |
+| Hora (peninsular) | Acción |
+|-------------------|--------|
+| Viernes 20:00 | Emparejamiento principal |
+| Sábado 23:00 | Segunda oportunidad (solo sin partido) |
+| Domingo 23:00 | Última segunda oportunidad |
+
+Detalle completo, limitaciones del plan gratis y archivos implicados: **[`docs/EMPAREJAMIENTOS.md`](docs/EMPAREJAMIENTOS.md)**.
 
 ## Reglas de negocio
 
 - **Puntos:** victoria 2, empate 1, derrota 0
-- **Hándicap:** +1 PV por cada 4 puntos de diferencia (para el jugador con menos puntos)
-- **Emparejamientos:** priorizan rivales nuevos, menos partidas jugadas, disponibilidad compatible y evitan repeticiones recientes
+- **Underdog:** +1 PL extra por cada 4 PL de diferencia al ganar estando por detrás
+- **Emparejamientos:** rivales nuevos, menos partidas jugadas, disponibilidad compatible, evitar repetir el último rival
 
-Los pesos del algoritmo están en `src/lib/league/matching.ts` (`MATCH_WEIGHTS`).
+Pesos del algoritmo: `src/lib/league/matching.ts` (`MATCH_WEIGHTS`).
 
-## Despliegue
+## Despliegue en Railway
 
-Compatible con [Vercel](https://vercel.com) o [Railway](https://railway.app). Configura las mismas variables de entorno y actualiza la URL de callback en Supabase.
+1. Conecta el repositorio a un servicio en Railway.
+2. Comando de build: `npm run build`
+3. Comando de start: `npm start` (equivale a `next start`)
+4. Variables de entorno en Railway (mismas que `.env.local.example`):
+
+   | Variable | Obligatoria | Uso |
+   |----------|-------------|-----|
+   | `NEXT_PUBLIC_SUPABASE_URL` | Sí | Cliente Supabase |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Sí | Cliente Supabase |
+   | `SUPABASE_SERVICE_ROLE_KEY` | Sí | Emparejamientos automáticos |
+   | `CRON_SECRET` | Opcional | Forzar emparejamiento manual vía API |
+
+5. Añade la URL pública de Railway en Supabase (callback de auth).
+
+**No hace falta** crear cron jobs, tareas programadas ni servicios extra en Railway: el emparejamiento lo gestiona la propia app al arrancar y al entrar usuarios.
+
+### Demo estática (GitHub Pages)
+
+Existe un modo `NEXT_PUBLIC_STATIC_DEMO` para publicar una demo sin servidor Node. No incluye emparejamiento automático real ni Supabase en vivo.

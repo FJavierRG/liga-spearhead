@@ -238,7 +238,9 @@ export function AvailabilityPanel({
       </div>
 
       <p className="text-base leading-relaxed text-[var(--muted)]">
-        Los emparejamientos se calculan automáticamente los lunes a las 01:00.
+        Los emparejamientos se calculan los viernes a las 20:00 para la semana
+        siguiente. El sábado y el domingo a las 23:00 hay un repaso para quien
+        sigue sin partido asignado.
       </p>
     </section>
   );

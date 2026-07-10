@@ -13,7 +13,7 @@ import {
 } from "@/components/layout/sidebar-nav";
 import { useReglasPendientes } from "@/hooks/use-reglas-pendientes";
 import { SectionTitle } from "@/components/ui/section-title";
-import { formatWeekRange } from "@/lib/league/week";
+import { formatWeekRange, getScheduleWeekOffset } from "@/lib/league/week";
 import { cn } from "@/lib/utils";
 import type { MatchWithPlayers, ScheduledMatchWithPlayers } from "@/lib/data/queries";
 import type { Availability, PlayerAviso, Season, StandingRow, User } from "@/types/database";
@@ -59,7 +59,7 @@ export function LigaView({
   matches,
   avisos,
 }: LigaViewProps) {
-  const weekLabel = formatWeekRange(0);
+  const weekLabel = formatWeekRange(getScheduleWeekOffset());
   const [section, setSection] = useState<LigaSection>("tablon");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { reglasPendientes, marcarReglasVistas } = useReglasPendientes(profile);

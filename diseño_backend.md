@@ -16,7 +16,7 @@ El diseño prioriza la simplicidad, el bajo mantenimiento y el uso de servicios 
 
 # Arquitectura
 
-La aplicación utilizará **Supabase** como Backend as a Service (BaaS).
+La aplicación utilizará **Supabase** como Backend as a Service (BaaS) y **Next.js** desplegado en **Railway** como aplicación web (UI + lógica de servidor).
 
 Supabase será responsable de:
 
@@ -214,16 +214,48 @@ El cálculo deberá realizarse siempre utilizando la clasificación existente an
 
 # Emparejamientos
 
-El backend será responsable de generar los enfrentamientos recomendados.
+El backend genera partidos programados (`scheduled_matches`) a partir de la disponibilidad y el historial de la liga.
 
-Para ello deberá considerar:
+## Calendario
 
-- Disponibilidad compatible.
-- Prioridad a rivales no enfrentados previamente.
-- Prioridad a jugadores con menor número de partidas.
-- Penalización de enfrentamientos repetidos de forma reciente.
+Todas las horas son **peninsulares** (`Europe/Madrid`):
 
-El algoritmo deberá ser fácilmente ajustable sin modificar el resto del sistema.
+| Momento | Acción |
+|---------|--------|
+| Viernes 20:00 | Emparejamiento principal de la semana siguiente |
+| Sábado 23:00 | Repaso: solo jugadores sin partido asignado |
+| Domingo 23:00 | Último repaso, mismas reglas |
+
+Los jugadores deben indicar disponibilidad **antes del viernes** para la semana que empieza el lunes siguiente.
+
+## Ejecución automática
+
+No se usa cron externo ni tareas en el panel de Railway. La app desplegada ejecuta `maybeRunWeeklySchedules` (`src/lib/league/schedule-runner.ts`):
+
+- Al arrancar el servidor (reloj cada 15 minutos).
+- Al cargar el tablón principal.
+
+Documentación detallada: [`docs/EMPAREJAMIENTOS.md`](docs/EMPAREJAMIENTOS.md).
+
+## Algoritmo
+
+Para cada semana, entre jugadores **sin partido ya asignado** y con disponibilidad compatible, el sistema prioriza:
+
+- Rivales no enfrentados previamente.
+- Jugadores con menor número de partidas.
+- Evitar repetir el último rival.
+- Maximizar coincidencias de franja horaria.
+
+Implementación: `src/lib/league/weekly-schedule.ts` (emparejamiento máximo ponderado) y `src/lib/league/matching.ts` (pesos).
+
+## Reemparejamiento puntual
+
+- Al **cancelar** un partido programado se intenta reemparejar a los jugadores liberados en esa misma semana.
+- **No** se recalcula al guardar disponibilidad (evita abuso y carga innecesaria).
+
+## Permisos
+
+La inserción de emparejamientos usa el cliente **service role** en servidor (`SUPABASE_SERVICE_ROLE_KEY`). Los jugadores solo leen sus partidos programados; no insertan emparejamientos directamente.
 
 ---
 

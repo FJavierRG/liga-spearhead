@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import Link from "next/link";
 import { PositionChangeIndicator } from "@/components/position-change-indicator";
 import { enrichStandingsWithPositionChanges } from "@/lib/league/position-snapshot";
 import type { StandingRow } from "@/types/database";
@@ -115,12 +114,9 @@ export function StandingsTable({
               </td>
               <td className={cn(cellPad, compact ? "py-2" : "py-2.5")}>
                 <div className="flex items-center gap-0.5">
-                  <Link
-                    href={`/jugador/${row.jugador_id}`}
-                    className="link-fantasy max-w-[5.5rem] truncate font-medium"
-                  >
+                  <span className="max-w-[5.5rem] truncate font-medium">
                     {row.nombre}
-                  </Link>
+                  </span>
                   <PositionChangeIndicator
                     posicion={row.posicion}
                     posicionAnterior={row.posicion_anterior}
