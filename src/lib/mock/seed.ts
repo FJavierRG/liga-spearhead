@@ -8,6 +8,7 @@ import type {
   TimeSlot,
   User,
 } from "@/types/database";
+import { computeStandingsFromMatches } from "@/lib/league/match-points";
 import { getWeekDates, getWeekStartIso } from "@/lib/league/week";
 import { generateWeeklySchedule } from "@/lib/league/weekly-schedule";
 
@@ -253,47 +254,5 @@ export function computeStandings(
   matches: Match[],
   seasonId: string
 ): StandingRow[] {
-  const seasonMatches = matches.filter((m) => m.season_id === seasonId);
-
-  const rows = users.map((user) => {
-    const played = seasonMatches.filter(
-      (m) => m.jugador_a === user.id || m.jugador_b === user.id
-    );
-
-    const victorias = played.filter(
-      (m) =>
-        (m.jugador_a === user.id && m.resultado === "victoria_jugador_a") ||
-        (m.jugador_b === user.id && m.resultado === "victoria_jugador_b")
-    ).length;
-
-    const empates = played.filter((m) => m.resultado === "empate").length;
-
-    const derrotas = played.filter(
-      (m) =>
-        (m.jugador_a === user.id && m.resultado === "victoria_jugador_b") ||
-        (m.jugador_b === user.id && m.resultado === "victoria_jugador_a")
-    ).length;
-
-    const puntos = victorias * 2 + empates;
-
-    return {
-      jugador_id: user.id,
-      nombre: user.nombre,
-      avatar_url: user.avatar_url,
-      faccion: user.faccion,
-      partidas: played.length,
-      victorias,
-      empates,
-      derrotas,
-      puntos,
-    };
-  });
-
-  return rows.sort(
-    (a, b) =>
-      b.puntos - a.puntos ||
-      b.victorias - a.victorias ||
-      a.partidas - b.partidas ||
-      a.nombre.localeCompare(b.nombre)
-  );
+  return computeStandingsFromMatches(users, matches, seasonId);
 }

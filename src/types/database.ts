@@ -78,7 +78,8 @@ export interface StandingRow {
 }
 
 export interface HandicapResult {
-  bonus_pv: number;
+  /** PL extra si el underdog gana (+1 por cada 4 PLs de diferencia). */
+  bonus_pl: number;
   beneficiario: string;
 }
 

@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { SectionTitle } from "@/components/ui/section-title";
@@ -135,7 +135,8 @@ export function AvailabilityPanel({
             variant="ghost"
             size="sm"
             onClick={() => changeWeek(0)}
-            disabled={weekOffset === 0 || isPending}
+            disabled={isPending}
+            className={cn(weekOffset === 0 && "pointer-events-none")}
           >
             Hoy
           </Button>
@@ -151,7 +152,8 @@ export function AvailabilityPanel({
         </div>
       </div>
 
-      <div className="fantasy-panel overflow-x-auto">
+      <div className="fantasy-panel fantasy-panel-torn">
+        <div className="overflow-x-auto">
         <table className="w-full min-w-[520px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-[var(--border)]">
@@ -183,14 +185,22 @@ export function AvailabilityPanel({
                         onClick={() => toggleSlot(fecha, key)}
                         aria-pressed={active}
                         className={cn(
-                          "mx-auto h-8 w-full max-w-[56px] rounded-md border transition-colors",
+                          "relative mx-auto flex h-8 w-full max-w-[56px] items-center justify-center rounded-md border transition-colors",
                           active
                             ? "border-[var(--border-light)] bg-[color-mix(in_srgb,var(--accent)_35%,#1a1208)]"
                             : "border-[var(--border)] bg-[var(--surface-muted)]",
                           editing && "hover:ring-1 hover:ring-[var(--accent)]/40",
                           !editing && "cursor-default"
                         )}
-                      />
+                      >
+                        {active && (
+                          <Check
+                            className="h-4 w-4 text-[#BAB777]"
+                            strokeWidth={2.5}
+                            aria-hidden
+                          />
+                        )}
+                      </button>
                     </td>
                   );
                 })}
@@ -198,6 +208,7 @@ export function AvailabilityPanel({
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       <div className="flex gap-2">

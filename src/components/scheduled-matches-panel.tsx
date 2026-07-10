@@ -89,6 +89,10 @@ export function ScheduledMatchesPanel({
     <section className="space-y-3">
       <SectionTitle>Siguientes partidos · Semana {weekLabel}</SectionTitle>
 
+      <p className="text-sm text-[var(--muted)]">
+        Una vez terminado debéis marcarlo aquí como &quot;Finalizado&quot;
+      </p>
+
       {scheduled.length === 0 ? (
         <p className="fantasy-panel border-dashed px-4 py-6 text-center text-sm text-[var(--muted)]">
           Sin partidos asignados esta semana.

@@ -32,7 +32,7 @@ export function NotificationsPanel({ notifications }: NotificationsPanelProps) {
   return (
     <div className="space-y-2">
       <SectionTitle>Novedades</SectionTitle>
-      <div className="fantasy-panel overflow-hidden">
+      <div className="fantasy-panel fantasy-panel-torn">
         {notifications.length === 0 ? (
           <p className="px-4 py-5 text-center text-sm text-[var(--muted)]">
             Sin novedades recientes.
