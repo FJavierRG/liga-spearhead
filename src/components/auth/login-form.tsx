@@ -51,6 +51,7 @@ export function LoginForm({ authError }: LoginFormProps) {
         password,
         options: {
           data: { full_name: nombre.trim() },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
