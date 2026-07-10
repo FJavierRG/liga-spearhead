@@ -18,6 +18,7 @@ import {
   setClientSessionUserId,
 } from "@/lib/client-demo/session";
 import { addPositions, getPlayerStanding } from "@/lib/league/standings";
+import { validatePlayerName } from "@/lib/validation/player-name";
 import type { MatchResult, TimeSlot } from "@/types/database";
 
 function json(data: unknown, status = 200): Response {
@@ -79,8 +80,11 @@ export async function handleStaticDemoApi(
     const userId = requireUser();
     if (userId instanceof Response) return userId;
 
+    const nameCheck = validatePlayerName(body?.nombre);
+    if (!nameCheck.ok) return json({ error: nameCheck.error }, 400);
+
     const updated = updateMockUser(userId, {
-      nombre: body?.nombre as string,
+      nombre: nameCheck.value,
       faccion: (body?.faccion as string) || null,
     });
     if (!updated) return json({ error: "Usuario no encontrado" }, 404);

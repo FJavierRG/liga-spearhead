@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isMockMode } from "@/lib/config";
 import { getMockSessionUserId } from "@/lib/mock/auth";
 import { updateMockUser } from "@/lib/mock/store";
+import { validatePlayerName } from "@/lib/validation/player-name";
 
 export async function PATCH(request: Request) {
   if (!isMockMode()) {
@@ -14,8 +15,13 @@ export async function PATCH(request: Request) {
   }
 
   const { nombre, faccion } = await request.json();
+  const nameCheck = validatePlayerName(nombre);
+  if (!nameCheck.ok) {
+    return NextResponse.json({ error: nameCheck.error }, { status: 400 });
+  }
+
   const updated = updateMockUser(userId, {
-    nombre,
+    nombre: nameCheck.value,
     faccion: faccion || null,
   });
 

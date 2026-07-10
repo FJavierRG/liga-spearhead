@@ -28,6 +28,10 @@ html {
   font-size: 125%;
 }
 
+html[data-static-demo] {
+  --demo-banner-height: 2.25rem;
+}
+
 body {
   background-color: #211a12;
   background-image:

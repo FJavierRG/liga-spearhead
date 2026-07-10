@@ -11,6 +11,11 @@ export function isStaticDemo(): boolean {
   return process.env.NEXT_PUBLIC_STATIC_DEMO === "true";
 }
 
+/** URL de la app en producción (Supabase). Solo para la demo en GitHub Pages. */
+export function getProductionSiteUrl(): string {
+  return process.env.NEXT_PUBLIC_PRODUCTION_URL?.trim() ?? "";
+}
+
 export function getBasePath(): string {
   return process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 }

@@ -28,7 +28,7 @@ export const MOCK_USERS: User[] = [
   {
     id: MOCK_USER_IDS.admin,
     auth_user_id: "mock-auth-admin",
-    nombre: "Carlos (Admin)",
+    nombre: "Carlos_A",
     avatar_url: null,
     faccion: "Stormcast Eternals",
     rol: "administrador",

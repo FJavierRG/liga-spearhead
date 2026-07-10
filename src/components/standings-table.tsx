@@ -25,37 +25,79 @@ export function StandingsTable({
     [standings, seasonId]
   );
 
+  const cellPad = compact ? "px-1" : "px-3";
+
   return (
-    <table className="w-full whitespace-nowrap text-sm">
+    <table
+      className={cn(
+        "w-full whitespace-nowrap",
+        compact ? "text-xs" : "text-sm"
+      )}
+    >
       <thead>
         <tr className="border-b border-[var(--border)] bg-[color-mix(in_srgb,var(--surface-muted)_80%,#000)]">
-          <th className="font-display h-9 px-3 text-left text-xs font-semibold tracking-wider text-[var(--accent)]">
+          <th
+            className={cn(
+              "font-display h-9 text-left text-xs font-semibold tracking-wider text-[var(--accent)]",
+              cellPad
+            )}
+          >
             #
           </th>
-          <th className="font-display h-9 px-3 text-left text-xs font-semibold tracking-wider text-[var(--accent)]">
+          <th
+            className={cn(
+              "font-display h-9 text-left text-xs font-semibold tracking-wider text-[var(--accent)]",
+              cellPad
+            )}
+          >
             Jugador
           </th>
-          <th className="font-display h-9 px-3 text-left text-xs font-semibold tracking-wider text-[var(--accent)]">
+          <th
+            className={cn(
+              "font-display h-9 text-left text-xs font-semibold tracking-wider text-[var(--accent)]",
+              cellPad
+            )}
+          >
             Pts
           </th>
-          <th className="font-display h-9 px-3 text-left text-xs font-semibold tracking-wider text-[var(--accent)]">
+          <th
+            className={cn(
+              "font-display h-9 text-left text-xs font-semibold tracking-wider text-[var(--accent)]",
+              cellPad
+            )}
+          >
             V
           </th>
-          <th className="font-display h-9 px-3 text-left text-xs font-semibold tracking-wider text-[var(--accent)]">
+          <th
+            className={cn(
+              "font-display h-9 text-left text-xs font-semibold tracking-wider text-[var(--accent)]",
+              cellPad
+            )}
+          >
             E
           </th>
-          <th className="font-display h-9 px-3 text-left text-xs font-semibold tracking-wider text-[var(--accent)]">
+          <th
+            className={cn(
+              "font-display h-9 text-left text-xs font-semibold tracking-wider text-[var(--accent)]",
+              cellPad
+            )}
+          >
             D
           </th>
-          <th className="font-display h-9 px-3 text-left text-xs font-semibold tracking-wider text-[var(--accent)]">
-            Partidas
+          <th
+            className={cn(
+              "font-display h-9 text-left text-xs font-semibold tracking-wider text-[var(--accent)]",
+              cellPad
+            )}
+          >
+            {compact ? "Part." : "Partidas"}
           </th>
         </tr>
       </thead>
       <tbody>
         {rows.length === 0 ? (
           <tr>
-            <td colSpan={7} className="h-16 px-3 text-center text-[var(--muted)]">
+            <td colSpan={7} className={cn("h-16 text-center text-[var(--muted)]", cellPad)}>
               Sin jugadores
             </td>
           </tr>
@@ -68,14 +110,14 @@ export function StandingsTable({
                 highlightId === row.jugador_id && "row-highlight"
               )}
             >
-              <td className={cn("px-3 text-[var(--muted)]", compact ? "py-2" : "py-2.5")}>
+              <td className={cn(cellPad, "text-[var(--muted)]", compact ? "py-2" : "py-2.5")}>
                 {row.posicion}
               </td>
-              <td className={cn("px-3", compact ? "py-2" : "py-2.5")}>
-                <div className="flex items-center gap-1.5">
+              <td className={cn(cellPad, compact ? "py-2" : "py-2.5")}>
+                <div className="flex items-center gap-0.5">
                   <Link
                     href={`/jugador/${row.jugador_id}`}
-                    className="link-fantasy font-medium"
+                    className="link-fantasy max-w-[5.5rem] truncate font-medium"
                   >
                     {row.nombre}
                   </Link>
@@ -87,16 +129,17 @@ export function StandingsTable({
               </td>
               <td
                 className={cn(
-                  "px-3 font-semibold text-[var(--accent-hover)]",
+                  cellPad,
+                  "font-semibold text-[var(--accent-hover)]",
                   compact ? "py-2" : "py-2.5"
                 )}
               >
                 {row.puntos}
               </td>
-              <td className={cn("px-3", compact ? "py-2" : "py-2.5")}>{row.victorias}</td>
-              <td className={cn("px-3", compact ? "py-2" : "py-2.5")}>{row.empates}</td>
-              <td className={cn("px-3", compact ? "py-2" : "py-2.5")}>{row.derrotas}</td>
-              <td className={cn("px-3", compact ? "py-2" : "py-2.5")}>{row.partidas}</td>
+              <td className={cn(cellPad, compact ? "py-2" : "py-2.5")}>{row.victorias}</td>
+              <td className={cn(cellPad, compact ? "py-2" : "py-2.5")}>{row.empates}</td>
+              <td className={cn(cellPad, compact ? "py-2" : "py-2.5")}>{row.derrotas}</td>
+              <td className={cn(cellPad, compact ? "py-2" : "py-2.5")}>{row.partidas}</td>
             </tr>
           ))
         )}

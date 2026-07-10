@@ -38,6 +38,8 @@ jobs:
           fi
 
       - name: Build static demo
+        env:
+          NEXT_PUBLIC_PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
         run: node scripts/build-pages.mjs
 
       - uses: actions/upload-pages-artifact@v3

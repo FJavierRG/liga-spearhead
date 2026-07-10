@@ -10,6 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { User } from "@/types/database";
+import {
+  PLAYER_NAME_MAX_LENGTH,
+  sanitizePlayerName,
+  validatePlayerName,
+} from "@/lib/validation/player-name";
 
 interface ProfileEditFormProps {
   profile: User;
@@ -25,12 +30,21 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    const nameCheck = validatePlayerName(nombre);
+    if (!nameCheck.ok) {
+      toast.error(nameCheck.error);
+      return;
+    }
+
     startTransition(async () => {
       if (IS_MOCK) {
         const res = await fetch("/api/mock/profile", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nombre, faccion: faccion || null }),
+          body: JSON.stringify({
+            nombre: nameCheck.value,
+            faccion: faccion || null,
+          }),
         });
 
         if (!res.ok) {
@@ -46,7 +60,7 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
 
       const { error } = await supabase!
         .from("users")
-        .update({ nombre, faccion: faccion || null })
+        .update({ nombre: nameCheck.value, faccion: faccion || null })
         .eq("id", profile.id);
 
       if (error) {
@@ -70,9 +84,13 @@ export function ProfileEditForm({ profile }: ProfileEditFormProps) {
         <Input
           id="nombre"
           value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
+          onChange={(e) => setNombre(sanitizePlayerName(e.target.value))}
+          maxLength={PLAYER_NAME_MAX_LENGTH}
           required
         />
+        <p className="text-xs text-[var(--muted)]">
+          Máximo {PLAYER_NAME_MAX_LENGTH} caracteres.
+        </p>
       </div>
       <div className="space-y-2">
         <Label htmlFor="faccion">Facción principal (opcional)</Label>

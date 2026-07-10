@@ -116,7 +116,7 @@ export function SidebarNav({
     <>
       <nav
         aria-label="Secciones de la liga"
-        className="sticky top-14 z-30 flex border-b border-[var(--border)] bg-[color-mix(in_srgb,var(--background)_94%,#000)] lg:hidden"
+        className="sticky top-[calc(3.5rem+var(--demo-banner-height,0px))] z-30 flex border-b border-[var(--border)] bg-[color-mix(in_srgb,var(--background)_94%,#000)] lg:hidden"
       >
         {SECTIONS.map(({ id, shortLabel, icon }) => (
           <SectionButton

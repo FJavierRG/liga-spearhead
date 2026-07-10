@@ -6,6 +6,11 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  PLAYER_NAME_MAX_LENGTH,
+  sanitizePlayerName,
+  validatePlayerName,
+} from "@/lib/validation/player-name";
 
 type Mode = "signin" | "signup";
 
@@ -40,8 +45,9 @@ export function LoginForm({ authError }: LoginFormProps) {
     const supabase = createClient();
 
     if (mode === "signup") {
-      if (nombre.trim().length === 0) {
-        setError("Introduce tu nombre.");
+      const nameCheck = validatePlayerName(nombre);
+      if (!nameCheck.ok) {
+        setError(nameCheck.error);
         setIsSubmitting(false);
         return;
       }
@@ -50,7 +56,7 @@ export function LoginForm({ authError }: LoginFormProps) {
         email,
         password,
         options: {
-          data: { full_name: nombre.trim() },
+          data: { full_name: nameCheck.value },
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
@@ -130,10 +136,14 @@ export function LoginForm({ authError }: LoginFormProps) {
             <Input
               id="nombre"
               value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              autoComplete="name"
+              onChange={(e) => setNombre(sanitizePlayerName(e.target.value))}
+              autoComplete="username"
+              maxLength={PLAYER_NAME_MAX_LENGTH}
               required
             />
+            <p className="text-xs text-[var(--muted)]">
+              Máximo {PLAYER_NAME_MAX_LENGTH} caracteres.
+            </p>
           </div>
         )}
 
