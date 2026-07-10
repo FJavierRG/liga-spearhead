@@ -1,5 +1,6 @@
 import type {
   Availability,
+  LigaNovedad,
   Match,
   PlayerAviso,
   ScheduledMatch,
@@ -8,6 +9,7 @@ import type {
   TimeSlot,
   User,
 } from "@/types/database";
+import { buildPartidoFinalizadoMensaje } from "@/lib/league/liga-novedad-message";
 import { computeStandingsFromMatches } from "@/lib/league/match-points";
 import { getWeekDates, getWeekStartIso } from "@/lib/league/week";
 import { generateWeeklySchedule } from "@/lib/league/weekly-schedule";
@@ -204,6 +206,7 @@ export interface MockStore {
   availability: Availability[];
   scheduled_matches: ScheduledMatch[];
   avisos: PlayerAviso[];
+  liga_novedades: LigaNovedad[];
 }
 
 function buildInitialSchedule(): ScheduledMatch[] {
@@ -240,6 +243,34 @@ const SEED_AVISOS: PlayerAviso[] = [
   },
 ];
 
+function buildSeedLigaNovedades(): LigaNovedad[] {
+  const standings = computeStandings(MOCK_USERS, MOCK_MATCHES, MOCK_SEASON_ID);
+
+  return [...MOCK_MATCHES]
+    .sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )
+    .slice(0, 4)
+    .map((match, index) => {
+      const jugadorA = MOCK_USERS.find((user) => user.id === match.jugador_a)!;
+      const jugadorB = MOCK_USERS.find((user) => user.id === match.jugador_b)!;
+
+      return {
+        id: `liga-novedad-seed-${index + 1}`,
+        season_id: match.season_id,
+        match_id: match.id,
+        mensaje: buildPartidoFinalizadoMensaje(
+          match,
+          jugadorA,
+          jugadorB,
+          standings
+        ),
+        created_at: match.created_at,
+      };
+    });
+}
+
 export function createSeedStore(): MockStore {
   return {
     users: structuredClone(MOCK_USERS),
@@ -248,6 +279,7 @@ export function createSeedStore(): MockStore {
     availability: structuredClone(MOCK_AVAILABILITY),
     scheduled_matches: buildInitialSchedule(),
     avisos: structuredClone(SEED_AVISOS),
+    liga_novedades: buildSeedLigaNovedades(),
   };
 }
 

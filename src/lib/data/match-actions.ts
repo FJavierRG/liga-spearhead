@@ -4,7 +4,8 @@ import {
   getOpponentId,
   insertPlayerAviso,
 } from "@/lib/data/avisos";
-import { getCurrentProfile } from "@/lib/data/queries";
+import { getCurrentProfile, getPlayerById } from "@/lib/data/queries";
+import { publishPartidoFinalizadoNovedad } from "@/lib/data/liga-novedades";
 import { ensureWeeklySchedule } from "@/lib/data/scheduled-queries";
 import {
   cancelMockScheduledMatch,
@@ -92,6 +93,14 @@ export async function createMatchAction(input: {
 
   if (error) {
     return { error: mapMatchCreationError(error.message) };
+  }
+
+  const [jugadorA, jugadorB] = await Promise.all([
+    getPlayerById(input.jugador_a),
+    getPlayerById(input.jugador_b),
+  ]);
+  if (jugadorA && jugadorB) {
+    await publishPartidoFinalizadoNovedad(data, jugadorA, jugadorB);
   }
 
   return data;
@@ -275,6 +284,8 @@ export async function completeScheduledMatchAction(
       scheduled_match_id: scheduledId,
       match_id: match.id,
     });
+
+    await publishPartidoFinalizadoNovedad(match, jugadorA, jugadorB);
 
     await ensureWeeklySchedule(scheduled.week_start);
   }

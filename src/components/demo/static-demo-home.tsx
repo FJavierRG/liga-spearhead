@@ -36,6 +36,7 @@ export function StaticDemoHome() {
       players={data.players}
       matches={data.matches}
       avisos={data.avisos}
+      ligaNovedades={data.ligaNovedades}
     />
   );
 }

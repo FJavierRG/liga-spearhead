@@ -3,6 +3,7 @@ import { computeStandings } from "@/lib/mock/seed";
 import {
   cancelMockScheduledMatch,
   completeMockScheduledMatch,
+  getMockLigaNovedades,
   getMockPlayerAvisos,
   getMockScheduledWithPlayers,
   getMockStore,
@@ -204,6 +205,7 @@ export function getStaticDemoHomeData(userId: string) {
     players: [...store.users].sort((a, b) => a.nombre.localeCompare(b.nombre)),
     matches,
     avisos: getMockPlayerAvisos(userId, 15),
+    ligaNovedades: getMockLigaNovedades(season.id, 15),
   };
 }
 

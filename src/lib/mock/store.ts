@@ -1,11 +1,13 @@
 import type {
   Availability,
+  LigaNovedad,
   Match,
   PlayerAviso,
   ScheduledMatch,
   User,
 } from "@/types/database";
 import { formatResultForPlayers, getOpponentId } from "@/lib/data/avisos";
+import { buildPartidoFinalizadoMensaje } from "@/lib/league/liga-novedad-message";
 import { generateWeeklySchedule } from "@/lib/league/weekly-schedule";
 import { getWeekStartIso } from "@/lib/league/week";
 import { captureStandingsSnapshot } from "@/lib/league/position-snapshot";
@@ -98,6 +100,27 @@ export function insertMockMatch(
   };
 
   store.matches.unshift(newMatch);
+
+  const jugadorA = store.users.find((u) => u.id === newMatch.jugador_a);
+  const jugadorB = store.users.find((u) => u.id === newMatch.jugador_b);
+  if (jugadorA && jugadorB) {
+    const standings = computeStandings(
+      store.users,
+      store.matches,
+      newMatch.season_id
+    );
+    addMockLigaNovedad({
+      season_id: newMatch.season_id,
+      match_id: newMatch.id,
+      mensaje: buildPartidoFinalizadoMensaje(
+        newMatch,
+        jugadorA,
+        jugadorB,
+        standings
+      ),
+    });
+  }
+
   return newMatch;
 }
 
@@ -266,6 +289,33 @@ export function getMockPlayerAvisos(
   const store = getStoreInternal();
   return [...store.avisos]
     .filter((a) => a.jugador_id === playerId)
+    .sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )
+    .slice(0, limit);
+}
+
+// ─── Novedades de liga ───────────────────────────────────────────────────────
+
+export function addMockLigaNovedad(
+  novedad: Omit<LigaNovedad, "id" | "created_at">
+): void {
+  const store = getStoreInternal();
+  store.liga_novedades.unshift({
+    ...novedad,
+    id: `liga-novedad-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    created_at: new Date().toISOString(),
+  });
+}
+
+export function getMockLigaNovedades(
+  seasonId: string,
+  limit = 20
+): LigaNovedad[] {
+  const store = getStoreInternal();
+  return [...store.liga_novedades]
+    .filter((n) => n.season_id === seasonId)
     .sort(
       (a, b) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()

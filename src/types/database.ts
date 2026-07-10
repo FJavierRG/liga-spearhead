@@ -99,6 +99,14 @@ export interface PlayerAviso {
   created_at: string;
 }
 
+export interface LigaNovedad {
+  id: string;
+  season_id: string;
+  match_id: string | null;
+  mensaje: string;
+  created_at: string;
+}
+
 export interface RecommendedMatch {
   opponent: User;
   score: number;

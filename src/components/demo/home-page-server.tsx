@@ -9,6 +9,7 @@ import {
   getPlayerAvisos,
   getStandings,
 } from "@/lib/data/queries";
+import { getLigaNovedades } from "@/lib/data/liga-novedades";
 import { maybeRunWeeklySchedules } from "@/lib/league/schedule-runner";
 import { LigaView } from "@/components/liga-view";
 
@@ -25,7 +26,7 @@ export async function HomePageServer() {
 
   await maybeRunWeeklySchedules();
 
-  const [players, standings, availability, scheduled, matches, avisos] =
+  const [players, standings, availability, scheduled, matches, avisos, ligaNovedades] =
     await Promise.all([
       getAllPlayers(),
       getStandings(season.id),
@@ -33,6 +34,7 @@ export async function HomePageServer() {
       getPlayerScheduledMatches(profile.id),
       getMatchesWithPlayers(season.id),
       getPlayerAvisos(profile.id, 15),
+      getLigaNovedades(season.id, 15),
     ]);
 
   return (
@@ -45,6 +47,7 @@ export async function HomePageServer() {
       players={players}
       matches={matches}
       avisos={avisos}
+      ligaNovedades={ligaNovedades}
     />
   );
 }

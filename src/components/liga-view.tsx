@@ -16,7 +16,7 @@ import { SectionTitle } from "@/components/ui/section-title";
 import { formatWeekRange, getScheduleWeekOffset } from "@/lib/league/week";
 import { cn } from "@/lib/utils";
 import type { MatchWithPlayers, ScheduledMatchWithPlayers } from "@/lib/data/queries";
-import type { Availability, PlayerAviso, Season, StandingRow, User } from "@/types/database";
+import type { Availability, LigaNovedad, PlayerAviso, Season, StandingRow, User } from "@/types/database";
 
 const AvailabilityPanel = dynamic(
   () =>
@@ -47,6 +47,7 @@ interface LigaViewProps {
   players: User[];
   matches: MatchWithPlayers[];
   avisos: PlayerAviso[];
+  ligaNovedades: LigaNovedad[];
 }
 
 export function LigaView({
@@ -58,6 +59,7 @@ export function LigaView({
   players,
   matches,
   avisos,
+  ligaNovedades,
 }: LigaViewProps) {
   const weekLabel = formatWeekRange(getScheduleWeekOffset());
   const [section, setSection] = useState<LigaSection>("tablon");
@@ -103,6 +105,7 @@ export function LigaView({
             players={players}
             weekLabel={weekLabel}
             avisos={avisos}
+            ligaNovedades={ligaNovedades}
           />
         )}
 
@@ -136,6 +139,7 @@ function TablonContent({
   players,
   weekLabel,
   avisos,
+  ligaNovedades,
 }: {
   profile: User;
   season: Season;
@@ -145,6 +149,7 @@ function TablonContent({
   players: User[];
   weekLabel: string;
   avisos: PlayerAviso[];
+  ligaNovedades: LigaNovedad[];
 }) {
   return (
     <div className="mx-auto flex w-full max-w-7xl gap-10 pb-12">
@@ -160,7 +165,7 @@ function TablonContent({
               />
             </div>
           </div>
-          <AvisosPanel avisos={avisos} />
+          <AvisosPanel avisos={avisos} ligaNovedades={ligaNovedades} />
         </div>
       </aside>
 
@@ -178,7 +183,7 @@ function TablonContent({
         </section>
 
         <section className="lg:hidden">
-          <AvisosPanel avisos={avisos} />
+          <AvisosPanel avisos={avisos} ligaNovedades={ligaNovedades} />
         </section>
 
         <AvailabilityPanel
