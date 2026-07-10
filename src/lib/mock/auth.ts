@@ -1,8 +1,10 @@
+import { connection } from "next/server";
 import { cookies } from "next/headers";
 
 export const MOCK_SESSION_COOKIE = "liga-mock-user";
 
 export async function getMockSessionUserId(): Promise<string | null> {
+  await connection();
   const cookieStore = await cookies();
   return cookieStore.get(MOCK_SESSION_COOKIE)?.value ?? null;
 }

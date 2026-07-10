@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { isStaticDemo } from "@/lib/config";
 import { StaticDemoLogin } from "@/components/demo/static-demo-login";
 import { LoginPageServer } from "@/components/demo/login-page-server";
@@ -11,6 +12,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     return <StaticDemoLogin />;
   }
 
+  await connection();
   const { error } = await searchParams;
 
   return <LoginPageServer authError={error === "auth"} />;

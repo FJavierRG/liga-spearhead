@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { isStaticDemo } from "@/lib/config";
 import { MOCK_USER_IDS } from "@/lib/mock/seed";
 import { StaticDemoJugador } from "@/components/demo/static-demo-jugador";
@@ -22,5 +23,6 @@ export default async function JugadorPage({ params }: PageProps) {
     return <StaticDemoJugador playerId={id} />;
   }
 
+  await connection();
   return <JugadorPageServer id={id} />;
 }
